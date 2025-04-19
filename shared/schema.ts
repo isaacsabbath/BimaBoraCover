@@ -42,8 +42,9 @@ export const insurancePlans = pgTable("insurance_plans", {
   dailyPremium: doublePrecision("daily_premium").notNull(),
   weeklyPremium: doublePrecision("weekly_premium").notNull(),
   monthlyPremium: doublePrecision("monthly_premium").notNull(),
+  yearlyPremium: doublePrecision("yearly_premium").notNull(),
   benefits: json("benefits").$type<string[]>(),
-  planType: text("plan_type").notNull(), // 'individual', 'family', 'group'
+  planType: text("plan_type").notNull(), // 'individual', 'family', 'group', 'health', 'dental', 'health_dental'
   isPopular: boolean("is_popular").default(false),
   tag: text("tag"), // e.g., 'Most Affordable', null if no tag
 });
@@ -55,6 +56,7 @@ export const insertInsurancePlanSchema = createInsertSchema(insurancePlans).pick
   dailyPremium: true,
   weeklyPremium: true,
   monthlyPremium: true,
+  yearlyPremium: true,
   benefits: true,
   planType: true,
   isPopular: true,
@@ -69,7 +71,7 @@ export const userInsurance = pgTable("user_insurance", {
   status: text("status").notNull(), // 'active', 'inactive', 'pending'
   startDate: date("start_date").notNull(),
   endDate: date("end_date"),
-  paymentFrequency: text("payment_frequency").notNull(), // 'daily', 'weekly', 'monthly'
+  paymentFrequency: text("payment_frequency").notNull(), // 'daily', 'weekly', 'monthly', 'yearly'
   nextPaymentDate: date("next_payment_date"),
   nextPaymentAmount: doublePrecision("next_payment_amount"),
 });

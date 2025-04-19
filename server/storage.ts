@@ -113,6 +113,7 @@ export class MemStorage implements IStorage {
   }
 
   private createDefaultInsurancePlans(): void {
+    // Dental-Only Plan
     const dentalOnlyPlan: InsertInsurancePlan = {
       name: "Dental-Only Cover",
       description: "Basic dental care including checkups, cleanings, and minor procedures.",
@@ -120,55 +121,103 @@ export class MemStorage implements IStorage {
       dailyPremium: 20,
       weeklyPremium: 140,
       monthlyPremium: 600,
+      yearlyPremium: 6500,
       benefits: [
         "Dental checkups & cleanings",
         "Basic dental procedures",
         "Up to KSh 10,000 annual coverage"
       ],
-      planType: "individual",
+      planType: "dental",
       isPopular: false,
       tag: "Most Affordable"
     };
 
-    const comboPlan: InsertInsurancePlan = {
+    // Health-Only Plan
+    const healthOnlyPlan: InsertInsurancePlan = {
+      name: "Health-Only Cover",
+      description: "Essential health coverage for outpatient care and medications.",
+      coverageAmount: 20000,
+      dailyPremium: 30,
+      weeklyPremium: 210,
+      monthlyPremium: 900,
+      yearlyPremium: 9800,
+      benefits: [
+        "Outpatient consultations",
+        "Prescription medications",
+        "Basic diagnostics",
+        "Up to KSh 20,000 annual coverage"
+      ],
+      planType: "health",
+      isPopular: false,
+      tag: "Essential Care"
+    };
+
+    // Health + Dental Combo Plan
+    const healthDentalPlan: InsertInsurancePlan = {
       name: "Health + Dental Combo",
       description: "Comprehensive coverage for both medical and dental needs.",
       coverageAmount: 25000,
       dailyPremium: 40,
       weeklyPremium: 280,
       monthlyPremium: 1200,
+      yearlyPremium: 13000,
       benefits: [
         "All dental benefits",
         "Outpatient care & consultations",
         "Prescription medications",
         "Up to KSh 25,000 annual coverage"
       ],
-      planType: "individual",
+      planType: "health_dental",
       isPopular: true,
-      tag: null
+      tag: "Best Value"
     };
 
-    const familyPlan: InsertInsurancePlan = {
-      name: "Family Cover",
-      description: "Complete health protection for you and up to 4 dependents.",
-      coverageAmount: 50000,
-      dailyPremium: 100,
-      weeklyPremium: 700,
-      monthlyPremium: 3000,
+    // Family Health Plan
+    const familyHealthPlan: InsertInsurancePlan = {
+      name: "Family Health Cover",
+      description: "Health protection for you and up to 4 dependents.",
+      coverageAmount: 40000,
+      dailyPremium: 80,
+      weeklyPremium: 560,
+      monthlyPremium: 2400,
+      yearlyPremium: 26000,
       benefits: [
-        "All combo benefits for the entire family",
+        "Outpatient care for all family members",
         "Maternity benefits",
         "Children's vaccinations",
-        "Up to KSh 50,000 annual coverage"
+        "Up to KSh 40,000 annual coverage"
       ],
       planType: "family",
       isPopular: false,
       tag: null
     };
 
+    // Complete Family Plan
+    const completeFamilyPlan: InsertInsurancePlan = {
+      name: "Complete Family Cover",
+      description: "Full health and dental protection for you and up to 4 dependents.",
+      coverageAmount: 50000,
+      dailyPremium: 100,
+      weeklyPremium: 700,
+      monthlyPremium: 3000,
+      yearlyPremium: 32000,
+      benefits: [
+        "All health benefits for the entire family",
+        "Dental care for all family members",
+        "Maternity benefits",
+        "Children's vaccinations",
+        "Up to KSh 50,000 annual coverage"
+      ],
+      planType: "family",
+      isPopular: false,
+      tag: "Comprehensive"
+    };
+
     this.createInsurancePlan(dentalOnlyPlan);
-    this.createInsurancePlan(comboPlan);
-    this.createInsurancePlan(familyPlan);
+    this.createInsurancePlan(healthOnlyPlan);
+    this.createInsurancePlan(healthDentalPlan);
+    this.createInsurancePlan(familyHealthPlan);
+    this.createInsurancePlan(completeFamilyPlan);
   }
 
   // User methods
