@@ -10,6 +10,8 @@ import ClaimPage from "@/pages/claim-page";
 import PaymentPage from "@/pages/payment-page";
 import ChamaPage from "@/pages/chama-page";
 import ProfilePage from "@/pages/profile-page";
+import LoginPage from "@/pages/login-page";
+import RegisterPage from "@/pages/register-page";
 import { UserProvider } from "@/context/user-context";
 import { InsuranceProvider } from "@/context/insurance-context";
 
@@ -22,6 +24,8 @@ function Router() {
       <Route path="/payment" component={PaymentPage} />
       <Route path="/chama" component={ChamaPage} />
       <Route path="/profile" component={ProfilePage} />
+      <Route path="/login" component={LoginPage} />
+      <Route path="/register" component={RegisterPage} />
       <Route component={NotFound} />
     </Switch>
   );
