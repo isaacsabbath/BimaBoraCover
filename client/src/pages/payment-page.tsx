@@ -4,19 +4,39 @@ import { Header } from "@/components/layout/header";
 import { BottomNavigation } from "@/components/layout/bottom-navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import { useInsurance } from "@/context/insurance-context";
 import { useUser } from "@/context/user-context";
 import { useToast } from "@/hooks/use-toast";
-import { format, addDays, addWeeks, addMonths } from "date-fns";
+import { format, addDays, addWeeks, addMonths, addYears } from "date-fns";
+import { apiRequest } from "@/lib/queryClient";
+import { Loader2, Smartphone, Users, CreditCard } from "lucide-react";
 
 export default function PaymentPage() {
   const { userInsurance, plans, makePayment, loadingUserData } = useInsurance();
   const { user } = useUser();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  const [selectedPaymentFrequency, setSelectedPaymentFrequency] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+  const [selectedPaymentFrequency, setSelectedPaymentFrequency] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('monthly');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'mpesa' | 'chama' | 'bank'>('mpesa');
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [stkResult, setStkResult] = useState<{
+    success: boolean;
+    message: string;
+    paymentId?: number;
+    checkoutRequestId?: string;
+  } | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  
+  // Initialize phone number from user data if available
+  useState(() => {
+    if (user?.phoneNumber) {
+      setPhoneNumber(user.phoneNumber);
+    }
+  });
 
   // Find the plan associated with user's insurance
   const userPlan = userInsurance && plans.find(p => p.id === userInsurance.planId);
@@ -32,6 +52,8 @@ export default function PaymentPage() {
         return userPlan.weeklyPremium;
       case 'monthly':
         return userPlan.monthlyPremium;
+      case 'yearly':
+        return userPlan.yearlyPremium;
       default:
         return userPlan.dailyPremium;
     }
@@ -48,11 +70,139 @@ export default function PaymentPage() {
         return format(addWeeks(today, 1), 'dd MMM yyyy');
       case 'monthly':
         return format(addMonths(today, 1), 'dd MMM yyyy');
+      case 'yearly':
+        return format(addYears(today, 1), 'dd MMM yyyy');
       default:
         return format(addDays(today, 1), 'dd MMM yyyy');
     }
   };
 
+  const handleMpesaPayment = async () => {
+    if (!phoneNumber || phoneNumber.length < 10) {
+      toast({
+        title: "Invalid Phone Number",
+        description: "Please enter a valid Kenyan phone number",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsProcessing(true);
+      const amount = getPremiumAmount();
+      
+      // Format phone number (ensure it has the correct format)
+      let formattedPhone = phoneNumber.replace(/\D/g, ''); // Remove non-digit characters
+      
+      // Handle local format (starting with 0)
+      if (formattedPhone.startsWith('0')) {
+        formattedPhone = formattedPhone.substring(1); // Remove leading zero
+      }
+      
+      // Remove country code if it's too long
+      if (formattedPhone.startsWith('254') && formattedPhone.length > 12) {
+        formattedPhone = formattedPhone.substring(3);
+      }
+      
+      // Ensure the number has at most 12 digits as required by the API
+      if (formattedPhone.length > 12) {
+        formattedPhone = formattedPhone.substring(0, 12);
+      }
+      
+      // Verify user and insurance data again
+      if (!user || !userInsurance) {
+        toast({
+          title: "Error",
+          description: "Missing user or insurance data. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Call the M-Pesa STK push API
+      const response = await apiRequest("POST", "/api/mpesa/stk-push", {
+        phoneNumber: formattedPhone,
+        amount,
+        userId: user.id,
+        userInsuranceId: userInsurance.id,
+        accountReference: `Insurance-${userInsurance.id}`,
+        transactionDesc: `Premium payment for ${user.fullName || 'BimaBora customer'}`,
+      });
+      
+      const result = await response.json();
+      setStkResult(result);
+      
+      if (result.success) {
+        toast({
+          title: "M-Pesa Request Sent",
+          description: "Please check your phone to complete the payment",
+        });
+      } else {
+        toast({
+          title: "M-Pesa Request Failed",
+          description: result.message || "Failed to initiate payment",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("M-Pesa payment error:", error);
+      toast({
+        title: "Payment Failed",
+        description: "There was an error processing your payment. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+  
+  const handleChamaPayment = async () => {
+    try {
+      setIsProcessing(true);
+      const amount = getPremiumAmount();
+      await makePayment(amount, 'chama');
+      
+      toast({
+        title: "Payment Request Sent",
+        description: "Your payment request has been sent to your Chama/SACCO administrator",
+      });
+    } catch (error) {
+      console.error("Chama payment error:", error);
+      toast({
+        title: "Payment Failed",
+        description: "There was an error processing your payment. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+  
+  const handleBankPayment = async () => {
+    try {
+      setIsProcessing(true);
+      const amount = getPremiumAmount();
+      await makePayment(amount, 'bank');
+      
+      toast({
+        title: "Payment Successful",
+        description: `Your payment of KSh ${amount} has been processed. Your coverage is active until ${getNextCoverageDate()}.`,
+      });
+      
+      // Redirect to home page
+      setLocation('/');
+    } catch (error) {
+      console.error("Bank payment error:", error);
+      toast({
+        title: "Payment Failed",
+        description: "There was an error processing your payment. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+  
   const handleMakePayment = async () => {
     if (!user || !userInsurance) {
       toast({
@@ -63,28 +213,18 @@ export default function PaymentPage() {
       return;
     }
 
-    try {
-      setIsProcessing(true);
-      const amount = getPremiumAmount();
-      
-      await makePayment(amount, selectedPaymentMethod);
-      
-      toast({
-        title: "Payment Successful",
-        description: `Your payment of KSh ${amount} has been processed. Your coverage is active until ${getNextCoverageDate()}.`,
-      });
-      
-      // Redirect to home page
-      setLocation('/');
-    } catch (error) {
-      console.error("Payment error:", error);
-      toast({
-        title: "Payment Failed",
-        description: "There was an error processing your payment. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsProcessing(false);
+    switch (selectedPaymentMethod) {
+      case 'mpesa':
+        await handleMpesaPayment();
+        break;
+      case 'chama':
+        await handleChamaPayment();
+        break;
+      case 'bank':
+        await handleBankPayment();
+        break;
+      default:
+        await handleMpesaPayment();
     }
   };
 
@@ -160,7 +300,7 @@ export default function PaymentPage() {
 
             <div className="mb-5">
               <p className="text-neutral-700 font-semibold mb-2">Payment Frequency</p>
-              <div className="grid grid-cols-3 gap-3 mb-3">
+              <div className="grid grid-cols-2 gap-3 mb-3">
                 <button 
                   className={`p-3 ${selectedPaymentFrequency === 'daily' 
                     ? 'border-2 border-primary bg-primary bg-opacity-5' 
@@ -190,6 +330,17 @@ export default function PaymentPage() {
                 >
                   <p className={`font-bold ${selectedPaymentFrequency === 'monthly' ? 'text-primary' : 'text-neutral-700'}`}>Monthly</p>
                   <p className="text-xs text-neutral-600">KSh {userPlan.monthlyPremium}</p>
+                </button>
+                <button 
+                  className={`p-3 ${selectedPaymentFrequency === 'yearly' 
+                    ? 'border-2 border-primary bg-primary bg-opacity-5' 
+                    : 'border border-neutral-300'} 
+                    rounded-lg text-center`}
+                  onClick={() => setSelectedPaymentFrequency('yearly')}
+                >
+                  <p className={`font-bold ${selectedPaymentFrequency === 'yearly' ? 'text-primary' : 'text-neutral-700'}`}>Yearly</p>
+                  <p className="text-xs text-neutral-600">KSh {userPlan.yearlyPremium}</p>
+                  <p className="text-[10px] text-green-600 font-medium">Save up to 15%</p>
                 </button>
               </div>
             </div>
@@ -264,6 +415,38 @@ export default function PaymentPage() {
               </div>
             </div>
 
+            {selectedPaymentMethod === 'mpesa' && (
+              <div className="mb-5">
+                <p className="text-neutral-700 font-semibold mb-2">M-Pesa Phone Number</p>
+                <div className="relative">
+                  <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                    <Smartphone className="h-5 w-5 text-neutral-500" />
+                  </div>
+                  <Input
+                    type="tel"
+                    placeholder="e.g. 0712345678"
+                    className="pl-10"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                  />
+                </div>
+                <p className="text-xs text-neutral-500 mt-1">
+                  Enter the phone number that will receive the M-Pesa payment request
+                </p>
+              </div>
+            )}
+
+            {stkResult && (
+              <div className={`mb-5 p-3 rounded-lg ${stkResult.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+                <p className={`font-medium ${stkResult.success ? 'text-green-700' : 'text-red-700'}`}>
+                  {stkResult.success ? 'M-Pesa Request Sent' : 'M-Pesa Request Failed'}
+                </p>
+                <p className="text-sm mt-1">
+                  {stkResult.message}
+                </p>
+              </div>
+            )}
+
             <div className="mb-5 pt-3 border-t border-neutral-200">
               <div className="flex justify-between mb-2">
                 <p className="text-neutral-600">Premium Amount</p>
@@ -284,7 +467,14 @@ export default function PaymentPage() {
               onClick={handleMakePayment}
               disabled={isProcessing}
             >
-              {isProcessing ? "Processing..." : "Pay Now"}
+              {isProcessing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>Pay Now</>
+              )}
             </Button>
             <p className="text-center text-xs text-neutral-500 mt-3">
               Your coverage will be active immediately after payment
