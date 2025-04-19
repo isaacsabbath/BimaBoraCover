@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
+import { z } from "zod";
 import { 
   insertUserSchema, 
   insertClaimSchema, 
@@ -13,6 +14,7 @@ import {
   insertGroupInsuranceSchema,
   insertGroupActivitySchema
 } from "@shared/schema";
+import { mpesaService } from "./mpesa";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Error handling middleware for Zod validation errors
@@ -236,6 +238,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
             nextPaymentAmount = plan.monthlyPremium;
             break;
+          case "yearly":
+            nextPaymentDate.setFullYear(nextPaymentDate.getFullYear() + 1);
+            nextPaymentAmount = plan.yearlyPremium;
+            break;
         }
         
         await storage.updateUserInsurance(userInsurance.id, {
@@ -247,6 +253,136 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(payment);
     } catch (err) {
       handleZodError(err, res);
+    }
+  });
+  
+  // M-Pesa STK Push API
+  const mpesaSTKSchema = z.object({
+    phoneNumber: z.string().min(10).max(12),
+    amount: z.number().positive(),
+    userId: z.number().int().positive(),
+    userInsuranceId: z.number().int().positive(),
+    accountReference: z.string().optional(),
+    transactionDesc: z.string().optional(),
+  });
+  
+  app.post("/api/mpesa/stk-push", async (req, res) => {
+    try {
+      const { phoneNumber, amount, userId, userInsuranceId, accountReference, transactionDesc } = 
+        mpesaSTKSchema.parse(req.body);
+      
+      // Verify user and insurance exist
+      const user = await storage.getUser(userId);
+      const userInsurance = await storage.getUserInsurance(userInsuranceId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      if (!userInsurance) {
+        return res.status(404).json({ message: "User insurance not found" });
+      }
+      
+      // Initiate STK Push
+      const stkResponse = await mpesaService.initiateSTKPush(
+        phoneNumber,
+        amount,
+        accountReference || `Insurance-${userInsurance.id}`,
+        transactionDesc || `Premium payment for ${user.fullName}`
+      );
+      
+      // Create a pending payment
+      const payment = await storage.createPayment({
+        userId,
+        userInsuranceId,
+        amount,
+        paymentMethod: "mpesa",
+        status: "pending",
+        transactionReference: stkResponse.CheckoutRequestID,
+      });
+      
+      res.status(200).json({
+        success: true,
+        message: "STK push initiated. Please complete payment on your phone.",
+        paymentId: payment.id,
+        checkoutRequestId: stkResponse.CheckoutRequestID,
+      });
+    } catch (err) {
+      console.error("M-Pesa STK Push error:", err);
+      if (err instanceof ZodError) {
+        return handleZodError(err, res);
+      }
+      res.status(500).json({ 
+        success: false, 
+        message: "Failed to initiate M-Pesa payment",
+        error: err.message 
+      });
+    }
+  });
+  
+  // M-Pesa callback endpoint (for demonstration, actual implementation would verify the callback)
+  app.post("/api/mpesa/callback", async (req, res) => {
+    try {
+      const { Body } = req.body;
+      
+      // In production, you would validate this callback from M-Pesa
+      
+      if (Body.stkCallback.ResultCode === 0) {
+        // Payment successful
+        const checkoutRequestID = Body.stkCallback.CheckoutRequestID;
+        
+        // Find the payment with this transaction reference
+        const payments = Array.from(storage.payments.values());
+        const payment = payments.find(p => p.transactionReference === checkoutRequestID);
+        
+        if (payment) {
+          // Update payment status
+          await storage.updatePayment(payment.id, {
+            status: "completed",
+          });
+          
+          // Update user insurance with next payment date
+          const userInsurance = await storage.getUserInsurance(payment.userInsuranceId);
+          if (userInsurance) {
+            const plan = await storage.getInsurancePlan(userInsurance.planId);
+            if (plan) {
+              let nextPaymentAmount;
+              let nextPaymentDate = new Date();
+              
+              switch (userInsurance.paymentFrequency) {
+                case "daily":
+                  nextPaymentDate.setDate(nextPaymentDate.getDate() + 1);
+                  nextPaymentAmount = plan.dailyPremium;
+                  break;
+                case "weekly":
+                  nextPaymentDate.setDate(nextPaymentDate.getDate() + 7);
+                  nextPaymentAmount = plan.weeklyPremium;
+                  break;
+                case "monthly":
+                  nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
+                  nextPaymentAmount = plan.monthlyPremium;
+                  break;
+                case "yearly":
+                  nextPaymentDate.setFullYear(nextPaymentDate.getFullYear() + 1);
+                  nextPaymentAmount = plan.yearlyPremium;
+                  break;
+              }
+              
+              await storage.updateUserInsurance(userInsurance.id, {
+                nextPaymentDate,
+                nextPaymentAmount,
+                status: "active", // Ensure policy is active after payment
+              });
+            }
+          }
+        }
+      }
+      
+      // Always respond with a success to M-Pesa
+      res.status(200).json({ ResultCode: 0, ResultDesc: "Accepted" });
+    } catch (err) {
+      console.error("M-Pesa callback error:", err);
+      // Always respond with success to M-Pesa, even on error
+      res.status(200).json({ ResultCode: 0, ResultDesc: "Accepted" });
     }
   });
 
