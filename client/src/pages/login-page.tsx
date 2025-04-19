@@ -12,14 +12,14 @@ export default function LoginPage() {
   const [, setLocation] = useLocation();
   const form = useForm({
     defaultValues: {
-      username: "",
-      password: "",
+      phoneNumber: "",
+      pin: "",
     },
   });
 
-  const onSubmit = async (data: { username: string; password: string }) => {
+  const onSubmit = async (data: { phoneNumber: string; pin: string }) => {
     try {
-      await login(data.username, data.password);
+      await login(data.phoneNumber, data.pin);
       setLocation("/");
     } catch (error) {
       // Error is handled by the UserContext
@@ -28,19 +28,19 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-neutral-100 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md hover:shadow-lg transition-shadow duration-200">
         <CardContent className="p-6">
-          <h1 className="text-2xl font-bold text-neutral-800 mb-6">Login to BimaBora</h1>
+          <h1 className="text-2xl font-bold text-neutral-800 mb-6">Login to Chama</h1>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
-                name="username"
+                name="phoneNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Username</FormLabel>
+                    <FormLabel>Phone Number</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter your username" {...field} />
+                      <Input placeholder="Enter your phone number" {...field} className="hover:border-primary focus:border-primary" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -48,18 +48,24 @@ export default function LoginPage() {
               />
               <FormField
                 control={form.control}
-                name="password"
+                name="pin"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel>PIN</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="Enter your password" {...field} />
+                      <Input 
+                        type="password" 
+                        placeholder="Enter your PIN" 
+                        maxLength={4} 
+                        {...field} 
+                        className="hover:border-primary focus:border-primary" 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full">
+              <Button type="submit" className="w-full hover:bg-primary-dark transition-colors">
                 Login
               </Button>
               <p className="text-center text-sm text-neutral-600">
