@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Header } from "@/components/layout/header";
 import { BottomNavigation } from "@/components/layout/bottom-navigation";
@@ -22,7 +22,7 @@ export default function PaymentPage() {
   const [, setLocation] = useLocation();
   const [selectedPaymentFrequency, setSelectedPaymentFrequency] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('monthly');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'mpesa' | 'chama' | 'bank'>('mpesa');
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || "");
   const [stkResult, setStkResult] = useState<{
     success: boolean;
     message: string;
@@ -30,13 +30,6 @@ export default function PaymentPage() {
     checkoutRequestId?: string;
   } | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  
-  // Initialize phone number from user data if available
-  useState(() => {
-    if (user?.phoneNumber) {
-      setPhoneNumber(user.phoneNumber);
-    }
-  });
 
   // Find the plan associated with user's insurance
   const userPlan = userInsurance && plans.find(p => p.id === userInsurance.planId);
