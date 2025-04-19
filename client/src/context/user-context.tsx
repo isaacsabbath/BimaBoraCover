@@ -10,7 +10,7 @@ const mockUser: User = {
   password: "password", // This would be hashed in a real app
   fullName: "John Doe",
   email: "johndoe@example.com",
-  phoneNumber: "+254 712 345 678",
+  phoneNumber: "0712345678",
   idNumber: "12345678",
   dateOfBirth: new Date("1990-01-15"),
   address: "123 Moi Avenue, Nairobi",

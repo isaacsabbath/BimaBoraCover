@@ -78,8 +78,19 @@ export class MpesaService {
       const timestamp = this.getTimestamp();
       const password = this.generatePassword(timestamp);
       
-      // Format phone number (remove + if present)
-      const formattedPhone = phoneNumber.replace('+', '');
+      // Format phone number
+      let formattedPhone = phoneNumber.replace(/\D/g, ''); // Remove all non-digit characters
+      
+      // Check if number starts with 0, convert to 254 format
+      if (formattedPhone.startsWith('0')) {
+        formattedPhone = `254${formattedPhone.substring(1)}`;
+      } 
+      // Ensure it starts with 254 for Kenya
+      else if (!formattedPhone.startsWith('254')) {
+        formattedPhone = `254${formattedPhone}`;
+      }
+      
+      log(`Formatted phone number: ${formattedPhone}`, 'mpesa');
       
       const requestBody = {
         BusinessShortCode: this.shortcode,

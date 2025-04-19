@@ -431,7 +431,7 @@ export default function PaymentPage() {
                   />
                 </div>
                 <p className="text-xs text-neutral-500 mt-1">
-                  Enter the phone number that will receive the M-Pesa payment request
+                  Enter your M-Pesa phone number starting with 07 (e.g. 0712345678)
                 </p>
               </div>
             )}
