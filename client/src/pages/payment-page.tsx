@@ -22,7 +22,7 @@ export default function PaymentPage() {
   const [, setLocation] = useLocation();
   const [selectedPaymentFrequency, setSelectedPaymentFrequency] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('monthly');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'mpesa' | 'chama' | 'bank'>('mpesa');
-  const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || "");
+  const [phoneNumber] = useState(user?.phoneNumber || "");
   const [stkResult, setStkResult] = useState<{
     success: boolean;
     message: string;
@@ -418,14 +418,13 @@ export default function PaymentPage() {
                   </div>
                   <Input
                     type="tel"
-                    placeholder="e.g. 0712345678"
-                    className="pl-10"
+                    className="pl-10 bg-neutral-50"
                     value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    readOnly
                   />
                 </div>
                 <p className="text-xs text-neutral-500 mt-1">
-                  Enter your M-Pesa phone number starting with 07 (e.g. 0712345678)
+                  Using your registered M-Pesa phone number
                 </p>
               </div>
             )}
