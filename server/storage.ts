@@ -98,7 +98,7 @@ export class MemStorage implements IStorage {
     this.groupInsurances = new Map();
     this.groupActivities = new Map();
 
-    this.userIdCounter = 1;
+    this.userIdCounter = 2; // Start from 2 since we're adding a user with ID 1
     this.planIdCounter = 1;
     this.userInsuranceIdCounter = 1;
     this.claimIdCounter = 1;
@@ -110,6 +110,48 @@ export class MemStorage implements IStorage {
 
     // Initialize with default insurance plans
     this.createDefaultInsurancePlans();
+    
+    // Create default test user matching client mock data
+    this.createDefaultTestUser();
+  }
+  
+  private createDefaultTestUser(): void {
+    // Create a test user with ID 1 to match the client mock
+    const testUser: User = {
+      id: 1,
+      username: "johndoe",
+      password: "password", 
+      fullName: "John Doe",
+      email: "johndoe@example.com",
+      phoneNumber: "0712345678",
+      idNumber: "12345678",
+      dateOfBirth: "1990-01-15", 
+      address: "123 Moi Avenue, Nairobi",
+      notificationPreferences: {
+        paymentReminders: true,
+        claimUpdates: true,
+        newPlans: true
+      },
+      createdAt: new Date()
+    };
+    
+    this.users.set(testUser.id, testUser);
+    
+    // Create a user insurance record for the test user
+    const userInsurance: UserInsurance = {
+      id: 1,
+      userId: 1,
+      planId: 3, // Health + Dental Combo
+      status: "active",
+      startDate: new Date().toISOString().split('T')[0],
+      endDate: null,
+      paymentFrequency: "monthly",
+      nextPaymentDate: null,
+      nextPaymentAmount: null
+    };
+    
+    this.userInsurances.set(userInsurance.id, userInsurance);
+    this.userInsuranceIdCounter++;
   }
 
   private createDefaultInsurancePlans(): void {
