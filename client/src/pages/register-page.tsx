@@ -1,4 +1,3 @@
-
 import { useForm } from "react-hook-form";
 import { useUser } from "@/context/user-context";
 import { useLocation } from "wouter";
@@ -12,25 +11,23 @@ export default function RegisterPage() {
   const [, setLocation] = useLocation();
   const form = useForm({
     defaultValues: {
-      username: "",
-      password: "",
       fullName: "",
-      email: "",
       phoneNumber: "",
-      idNumber: "",
+      pin: "",
     },
   });
 
   const onSubmit = async (data: {
-    username: string;
-    password: string;
     fullName: string;
-    email: string;
     phoneNumber: string;
-    idNumber: string;
+    pin: string;
   }) => {
     try {
-      await register(data);
+      await register({
+        ...data,
+        username: data.phoneNumber, // Use phone number as username
+        password: data.pin,
+      });
       setLocation("/");
     } catch (error) {
       // Error is handled by the UserContext
@@ -39,37 +36,11 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-neutral-100 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md hover:shadow-lg transition-shadow duration-200">
         <CardContent className="p-6">
           <h1 className="text-2xl font-bold text-neutral-800 mb-6">Create an Account</h1>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="username"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Username</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Choose a username" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="Choose a password" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
               <FormField
                 control={form.control}
                 name="fullName"
@@ -77,20 +48,7 @@ export default function RegisterPage() {
                   <FormItem>
                     <FormLabel>Full Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter your full name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input type="email" placeholder="Enter your email" {...field} />
+                      <Input placeholder="Enter your full name" {...field} className="hover:border-primary focus:border-primary" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -103,7 +61,7 @@ export default function RegisterPage() {
                   <FormItem>
                     <FormLabel>Phone Number</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter your phone number" {...field} />
+                      <Input placeholder="Enter your phone number" {...field} className="hover:border-primary focus:border-primary" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -111,18 +69,18 @@ export default function RegisterPage() {
               />
               <FormField
                 control={form.control}
-                name="idNumber"
+                name="pin"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>ID Number</FormLabel>
+                    <FormLabel>PIN</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter your ID number" {...field} />
+                      <Input type="password" placeholder="Create a PIN" maxLength={4} {...field} className="hover:border-primary focus:border-primary" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full">
+              <Button type="submit" className="w-full hover:bg-primary-dark transition-colors">
                 Register
               </Button>
               <p className="text-center text-sm text-neutral-600">

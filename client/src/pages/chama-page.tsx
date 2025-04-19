@@ -21,8 +21,49 @@ export default function ChamaPage() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [showContributeModal, setShowContributeModal] = useState(false);
+  const [showCreateChamaModal, setShowCreateChamaModal] = useState(false);
   const [contributionAmount, setContributionAmount] = useState(400);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [chamaName, setChamaName] = useState("");
+  const [chamaDescription, setChamaDescription] = useState("");
+
+  const handleCreateChama = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    
+    try {
+      setIsSubmitting(true);
+      const response = await fetch("/api/groups", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: chamaName,
+          description: chamaDescription,
+          adminUserId: user.id,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to create chama");
+
+      toast({
+        title: "Success",
+        description: "Your chama has been created successfully",
+      });
+      setShowCreateChamaModal(false);
+      // Refresh the page to show the new chama
+      window.location.reload();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create chama. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // Mock group activities for demonstration
   const [groupActivities, setGroupActivities] = useState([
@@ -225,10 +266,70 @@ export default function ChamaPage() {
               </Button>
               <Button 
                 variant="outline"
-                className="w-full py-2.5"
+                className="w-full py-2.5 mb-2 hover:bg-neutral-100"
+                onClick={() => setLocation("/group-details")}
               >
                 View Group Details
               </Button>
+              <Button
+                variant="outline"
+                className="w-full py-2.5 hover:bg-primary hover:text-white transition-colors"
+                onClick={() => setShowCreateChamaModal(true)}
+              >
+                Create New Chama
+              </Button>
+
+      {/* Create Chama Modal */}
+      {showCreateChamaModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-md rounded-xl">
+            <CardContent className="p-6">
+              <h3 className="text-xl font-bold text-neutral-800 mb-4">Create New Chama</h3>
+              <form onSubmit={handleCreateChama} className="space-y-4">
+                <div>
+                  <label className="block text-neutral-700 font-semibold mb-2">
+                    Chama Name
+                  </label>
+                  <input
+                    type="text"
+                    value={chamaName}
+                    onChange={(e) => setChamaName(e.target.value)}
+                    className="w-full px-4 py-3 rounded-lg border border-neutral-300 focus:border-primary focus:ring focus:ring-primary-light focus:ring-opacity-50 hover:border-primary"
+                    placeholder="Enter chama name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-neutral-700 font-semibold mb-2">
+                    Description
+                  </label>
+                  <textarea
+                    value={chamaDescription}
+                    onChange={(e) => setChamaDescription(e.target.value)}
+                    className="w-full px-4 py-3 rounded-lg border border-neutral-300 focus:border-primary focus:ring focus:ring-primary-light focus:ring-opacity-50 hover:border-primary"
+                    placeholder="Describe your chama"
+                    rows={3}
+                  />
+                </div>
+                <div className="flex space-x-3">
+                  <Button
+                    variant="outline"
+                    className="flex-1 hover:bg-neutral-100"
+                    onClick={() => setShowCreateChamaModal(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="flex-1 hover:bg-primary-dark"
+                  >
+                    Create Chama
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
             </div>
           </CardContent>
         </Card>
