@@ -1,5 +1,6 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
+import adminRouter from "./routes/admin-routes";
 import { storage } from "./storage";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -17,6 +18,8 @@ import {
 import { mpesaService } from "./mpesa";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Admin routes
+  app.use("/api/admin", adminRouter);
   // Error handling middleware for Zod validation errors
   const handleZodError = (err: unknown, res: Response) => {
     if (err instanceof ZodError) {
