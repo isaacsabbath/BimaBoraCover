@@ -258,7 +258,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // M-Pesa STK Push API
   const mpesaSTKSchema = z.object({
-    phoneNumber: z.string().min(10).max(12),
+    phoneNumber: z.string().min(10).max(12)
+      .refine(phone => {
+        // Must be at least 10 digits
+        const digitsOnly = phone.replace(/\D/g, '');
+        if (digitsOnly.length < 10) return false;
+        
+        // Must start with 0 or 254
+        return digitsOnly.startsWith('0') || digitsOnly.startsWith('254');
+      }, "Phone number must start with 0 or 254 and be at least 10 digits"),
     amount: z.number().positive(),
     userId: z.number().int().positive(),
     userInsuranceId: z.number().int().positive(),

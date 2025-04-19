@@ -87,19 +87,20 @@ export default function PaymentPage() {
       // Format phone number (ensure it has the correct format)
       let formattedPhone = phoneNumber.replace(/\D/g, ''); // Remove non-digit characters
       
-      // Handle local format (starting with 0)
-      if (formattedPhone.startsWith('0')) {
-        formattedPhone = formattedPhone.substring(1); // Remove leading zero
+      // Add leading zero if needed to make it 10 digits (per API requirement)
+      if (!formattedPhone.startsWith('0') && !formattedPhone.startsWith('254')) {
+        formattedPhone = '0' + formattedPhone;
       }
       
-      // Remove country code if it's too long
-      if (formattedPhone.startsWith('254') && formattedPhone.length > 12) {
-        formattedPhone = formattedPhone.substring(3);
-      }
-      
-      // Ensure the number has at most 12 digits as required by the API
-      if (formattedPhone.length > 12) {
-        formattedPhone = formattedPhone.substring(0, 12);
+      // If phone number is shorter than 10 digits, show error
+      if (formattedPhone.length < 10) {
+        toast({
+          title: "Invalid Phone Number",
+          description: "Please enter a complete 10-digit phone number starting with 07",
+          variant: "destructive",
+        });
+        setIsProcessing(false);
+        return;
       }
       
       // Verify user and insurance data again
