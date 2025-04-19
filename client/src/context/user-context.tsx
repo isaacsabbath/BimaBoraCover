@@ -147,6 +147,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       title: "Logged out",
       description: "You have been logged out successfully.",
     });
+    window.location.href = "/login";
   };
 
   return (
