@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block title %}Claims Officer Dashboard - BimaBora{% endblock %}
+{% block content %}
+<div class="container mx-auto px-4 py-5">
+  <div class="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-warning">Claims Officer</p>
+      <h1 class="text-2xl font-bold text-gray-800">Claims Queue</h1>
+      <p class="text-sm text-gray-500">Review submitted claims and open the separate KYC review queue when identity checks need manual attention.</p>
+    </div>
+    <div class="rounded-xl bg-white px-4 py-3 shadow-sm border border-gray-100">
+      <p class="text-xs text-gray-400">Open claims</p>
+      <p class="text-2xl font-bold text-gray-800">{{ claims|length }}</p>
+    </div>
+  </div>
+
+  <div class="grid gap-4 sm:grid-cols-2 mb-6">
+    <a href="{% url 'claims_officer_queue' %}" class="rounded-2xl border border-blue-200 bg-blue-50 p-4 shadow-sm hover:bg-blue-100 transition-colors">
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-blue-700">KYC Review Queue</p>
+      <div class="mt-2 flex items-end justify-between gap-4">
+        <div>
+          <p class="text-3xl font-bold text-blue-900">{{ kyc_queue_count }}</p>
+          <p class="text-sm text-blue-800">Separate queue for review KYC submissions.</p>
+        </div>
+        <span class="rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white">Open queue</span>
+      </div>
+    </a>
+
+    <a href="{% url 'payment' %}" class="rounded-2xl border border-green-200 bg-green-50 p-4 shadow-sm hover:bg-green-100 transition-colors">
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-green-700">Payments</p>
+      <div class="mt-2 flex items-end justify-between gap-4">
+        <div>
+          <p class="text-3xl font-bold text-green-900">B2C</p>
+          <p class="text-sm text-green-800">Initiate payout processing after claim approval.</p>
+        </div>
+        <span class="rounded-full bg-green-600 px-3 py-1 text-xs font-semibold text-white">Go to payments</span>
+      </div>
+    </a>
+  </div>
+
+  {% if claims %}
+  <div class="space-y-4">
+    {% for claim in claims %}
+    <div class="rounded-2xl border border-gray-200 bg-white shadow-sm {% if claim.ai_flagged %}ring-2 ring-yellow-300 bg-yellow-50/60{% endif %}">
+      <div class="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex-1">
+          <div class="flex flex-wrap items-center gap-2 mb-2">
+            <h2 class="text-base font-semibold text-gray-800">{{ claim.user_id.full_name }}</h2>
+            {% if claim.ai_flagged %}
+            <span class="rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-800">AI Flagged - Manual Review Required</span>
+            {% endif %}
+            <span class="rounded-full px-3 py-1 text-xs font-semibold {% if claim.status == 'under_review' %}bg-blue-100 text-blue-700{% else %}bg-gray-100 text-gray-700{% endif %}">{{ claim.get_status_display }}</span>
+          </div>
+          <div class="grid grid-cols-1 gap-2 text-sm text-gray-600 sm:grid-cols-4">
+            <p><span class="font-medium text-gray-800">Type:</span> {{ claim.get_claim_type_display }}</p>
+            <p><span class="font-medium text-gray-800">Amount:</span> KES {{ claim.claim_amount|floatformat:0 }}</p>
+            <p><span class="font-medium text-gray-800">Submitted:</span> {{ claim.submitted_at|date:"d M Y, H:i" }}</p>
+            <p><span class="font-medium text-gray-800">National ID:</span> {{ claim.user_id.national_id }}</p>
+          </div>
+        </div>
+        <div class="flex shrink-0 items-center gap-3">
+          <a href="{% url 'claims_officer_detail' claim.claim_id %}" class="inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-blue-600 transition-colors">Open</a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="rounded-2xl bg-white p-8 text-center shadow-sm">
+    <p class="text-lg font-semibold text-gray-800">No claims in the queue</p>
+    <p class="mt-1 text-sm text-gray-500">Submitted and under-review claims will appear here.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

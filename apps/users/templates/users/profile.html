@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}My Profile - BimaBora{% endblock %}
+{% block content %}
+<div class="container mx-auto px-4 py-5">
+  <div class="mb-6">
+    <h2 class="text-2xl font-bold text-gray-800 mb-1">My Profile</h2>
+    <p class="text-gray-500 text-sm">Manage your personal information.</p>
+  </div>
+
+  <!-- Avatar -->
+  <div class="bg-white rounded-xl shadow-sm p-4 mb-4 flex flex-col items-center">
+    <div class="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center text-primary text-2xl font-bold mb-3">
+      {{ user.full_name|slice:":1"|upper }}
+    </div>
+    <h3 class="font-bold text-xl text-gray-800">{{ user.full_name }}</h3>
+    <p class="text-gray-500 text-sm">{{ user.email }}</p>
+    <p class="text-gray-500 text-sm">{{ user.phone_number }}</p>
+  </div>
+
+  <!-- Edit Profile -->
+  <div class="bg-white rounded-xl shadow-sm p-4 mb-4">
+    <h3 class="font-bold text-gray-800 mb-4">Edit Profile</h3>
+    {% if errors %}
+    <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
+      {% for e in errors %}<p>{{ e }}</p>{% endfor %}
+    </div>
+    {% endif %}
+    <form method="POST" action="{% url 'profile' %}" class="space-y-4">
+      {% csrf_token %}
+      <div>
+        <label class="block text-gray-700 font-semibold mb-1 text-sm">Full Name</label>
+        <input type="text" name="full_name" value="{{ user.full_name }}"
+          class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:outline-none text-sm">
+      </div>
+      <div>
+        <label class="block text-gray-700 font-semibold mb-1 text-sm">Phone Number</label>
+        <input type="tel" name="phone_number" value="{{ user.phone_number }}"
+          class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:outline-none text-sm">
+      </div>
+      <div>
+        <label class="block text-gray-700 font-semibold mb-1 text-sm">Email Address</label>
+        <input type="email" name="email" value="{{ user.email }}" readonly
+          class="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 text-gray-400 text-sm cursor-not-allowed">
+      </div>
+      <button type="submit" class="w-full bg-primary text-white py-3 rounded-lg font-semibold text-sm hover:bg-blue-600 transition-colors">
+        Save Changes
+      </button>
+    </form>
+  </div>
+
+  <!-- Security -->
+  <div class="bg-white rounded-xl shadow-sm p-4 mb-4">
+    <h3 class="font-bold text-gray-800 mb-3">Account Security</h3>
+    <div class="space-y-2">
+      <a href="{% url 'change_password' %}" class="flex items-center justify-between w-full border border-gray-200 text-gray-700 px-4 py-3 rounded-lg text-sm font-semibold hover:bg-gray-50">
+        <span>Change Password</span>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+      </a>
+      <a href="{% url 'logout' %}" class="flex items-center justify-center w-full border border-gray-200 text-gray-700 px-4 py-3 rounded-lg text-sm font-semibold hover:bg-gray-50">
+        Logout
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

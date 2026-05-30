@@ -1,6 +1,13 @@
 node_modules
 dist
 .DS_Store
-server/public
-vite.config.ts.*
+staticfiles
+media
+__pycache__
+*.pyc
 *.tar.gz
+*.md
+*.sh
+.env
+db.sqlite3
+bustling-wharf-491620-b8-735712685e70.json

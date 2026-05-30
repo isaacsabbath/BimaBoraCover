@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Register - BimaBora{% endblock %}
+{% block content %}
+<div class="min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-md bg-white rounded-xl shadow-sm p-6">
+    <div class="flex items-center justify-center mb-6">
+      <div class="h-12 w-12 rounded-md bg-primary flex items-center justify-center text-white font-bold mr-3">BB</div>
+      <h1 class="text-2xl font-bold text-primary">BimaBora</h1>
+    </div>
+    <h2 class="text-xl font-bold text-gray-800 text-center mb-6">Create an Account</h2>
+    {% if errors %}
+    <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
+      {% for e in errors %}<p>{{ e }}</p>{% endfor %}
+    </div>
+    {% endif %}
+    <form method="POST" class="space-y-4">
+      {% csrf_token %}
+      <div>
+        <label class="block text-gray-700 font-semibold mb-1 text-sm">Full Name</label>
+        <input type="text" name="full_name" required placeholder="John Doe" value="{{ form_data.full_name|default:'' }}"
+          class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:outline-none focus:ring-2 focus:ring-blue-100 text-sm">
+      </div>
+      <div>
+        <label class="block text-gray-700 font-semibold mb-1 text-sm">Email</label>
+        <input type="email" name="email" required placeholder="you@example.com" value="{{ form_data.email|default:'' }}"
+          class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:outline-none focus:ring-2 focus:ring-blue-100 text-sm">
+      </div>
+      <div>
+        <label class="block text-gray-700 font-semibold mb-1 text-sm">Phone Number</label>
+        <input type="tel" name="phone_number" required placeholder="+254712345678" value="{{ form_data.phone_number|default:'' }}"
+          class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:outline-none focus:ring-2 focus:ring-blue-100 text-sm">
+      </div>
+      <div>
+        <label class="block text-gray-700 font-semibold mb-1 text-sm">ID/Passport Number</label>
+        <input type="text" name="national_id" required placeholder="12345678" value="{{ form_data.national_id|default:'' }}"
+          class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:outline-none focus:ring-2 focus:ring-blue-100 text-sm">
+      </div>
+      <div>
+        <label class="block text-gray-700 font-semibold mb-1 text-sm">Password</label>
+        <input type="password" name="password" required placeholder="••••••••"
+          class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:outline-none focus:ring-2 focus:ring-blue-100 text-sm">
+      </div>
+      <div>
+        <label class="block text-gray-700 font-semibold mb-1 text-sm">Confirm Password</label>
+        <input type="password" name="confirm_password" required placeholder="••••••••"
+          class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:outline-none focus:ring-2 focus:ring-blue-100 text-sm">
+      </div>
+      <button type="submit" class="w-full bg-primary text-white py-3 rounded-lg font-semibold hover:bg-blue-600 transition-colors text-sm">Create Account</button>
+      <p class="text-center text-sm text-gray-500">Already have an account? <a href="{% url 'login' %}" class="text-primary font-semibold hover:underline">Login</a></p>
+    </form>
+  </div>
+</div>
+{% endblock %}

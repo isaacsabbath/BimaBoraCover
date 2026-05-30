@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% block title %}Claim Detail - BimaBora{% endblock %}
+{% block content %}
+<div class="container mx-auto px-4 py-5">
+  <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-warning">Claims Officer</p>
+      <h1 class="text-2xl font-bold text-gray-800">Claim Detail</h1>
+      <p class="text-sm text-gray-500">Review the claim information and decide on the next step.</p>
+    </div>
+    <a href="{% url 'claims_officer_dashboard' %}" class="inline-flex items-center justify-center rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">Back to queue</a>
+  </div>
+
+  <div class="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+    <div class="space-y-6">
+      <div class="rounded-2xl bg-white p-5 shadow-sm border border-gray-100">
+        <div class="flex flex-wrap items-center gap-2 mb-4">
+          <h2 class="text-xl font-bold text-gray-800">{{ claim.user_id.full_name }}</h2>
+          {% if claim.ai_flagged %}
+          <span class="rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-800">AI Flagged - Manual Review Required</span>
+          {% endif %}
+          <span class="rounded-full px-3 py-1 text-xs font-semibold {% if claim.status == 'submitted' %}bg-blue-100 text-blue-700{% elif claim.status == 'under_review' %}bg-yellow-100 text-yellow-700{% elif claim.status == 'approved' %}bg-green-100 text-green-700{% elif claim.status == 'rejected' %}bg-red-100 text-red-700{% elif claim.status == 'info_requested' %}bg-orange-100 text-orange-700{% else %}bg-gray-100 text-gray-700{% endif %}">{{ claim.get_status_display }}</span>
+        </div>
+
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div>
+            <p class="text-xs uppercase tracking-wide text-gray-400">National ID</p>
+            <p class="mt-1 text-sm font-semibold text-gray-800">{{ claim.user_id.national_id }}</p>
+          </div>
+          <div>
+            <p class="text-xs uppercase tracking-wide text-gray-400">Phone Number</p>
+            <p class="mt-1 text-sm font-semibold text-gray-800">{{ claim.user_id.phone_number }}</p>
+          </div>
+          <div>
+            <p class="text-xs uppercase tracking-wide text-gray-400">Claim Type</p>
+            <p class="mt-1 text-sm font-semibold text-gray-800">{{ claim.get_claim_type_display }}</p>
+          </div>
+          <div>
+            <p class="text-xs uppercase tracking-wide text-gray-400">Claim Amount</p>
+            <p class="mt-1 text-sm font-semibold text-gray-800">KES {{ claim.claim_amount|floatformat:0 }}</p>
+          </div>
+          <div>
+            <p class="text-xs uppercase tracking-wide text-gray-400">Submitted</p>
+            <p class="mt-1 text-sm font-semibold text-gray-800">{{ claim.submitted_at|date:"d M Y, H:i" }}</p>
+          </div>
+          <div>
+            <p class="text-xs uppercase tracking-wide text-gray-400">Blockchain Hash</p>
+            <p class="mt-1 break-all text-sm font-semibold text-gray-800">{{ claim.blockchain_hash|default:"Not set" }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-2xl bg-white p-5 shadow-sm border border-gray-100">
+        <h3 class="text-lg font-semibold text-gray-800 mb-3">Description</h3>
+        <p class="text-sm leading-6 text-gray-600 whitespace-pre-line">{{ claim.description }}</p>
+      </div>
+
+      <div class="rounded-2xl bg-white p-5 shadow-sm border border-gray-100">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Submitted Documents</h3>
+        {% if documents %}
+        <div class="space-y-3">
+          {% for document in documents %}
+          <a href="{{ document.url }}" target="_blank" class="flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium text-primary hover:bg-blue-50 transition-colors">
+            <span>{{ document.label }}</span>
+            <span class="text-xs text-gray-400">Download</span>
+          </a>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-500">No documents attached to this claim.</p>
+        {% endif %}
+      </div>
+
+      <div class="rounded-2xl bg-white p-5 shadow-sm border border-gray-100">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">AI Verification Summary</h3>
+        {% if ai_summary %}
+        <div class="space-y-3">
+          {% for item in ai_summary %}
+          <div class="rounded-xl bg-gray-50 px-4 py-3">
+            <p class="text-xs uppercase tracking-wide text-gray-400">{{ item.label }}</p>
+            <p class="mt-1 text-sm font-semibold text-gray-800 whitespace-pre-line">{{ item.value }}</p>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-500">No AI verification result has been recorded yet.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="space-y-6">
+      <div class="rounded-2xl bg-white p-5 shadow-sm border border-gray-100">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Officer Actions</h3>
+        {% if claim.status == 'submitted' or claim.status == 'under_review' %}
+        <div class="space-y-3">
+          <form method="POST" class="w-full">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="approve">
+            <button type="submit" class="w-full rounded-xl bg-green-600 px-4 py-3 text-sm font-semibold text-white hover:bg-green-700 transition-colors">Approve</button>
+          </form>
+
+          <button type="button" onclick="toggleActionPanel('reject-panel')" class="w-full rounded-xl bg-red-600 px-4 py-3 text-sm font-semibold text-white hover:bg-red-700 transition-colors">Reject</button>
+
+          <button type="button" onclick="toggleActionPanel('info-panel')" class="w-full rounded-xl bg-orange-500 px-4 py-3 text-sm font-semibold text-white hover:bg-orange-600 transition-colors">Request More Info</button>
+        </div>
+        {% else %}
+        <div class="rounded-xl bg-gray-50 px-4 py-4 text-sm text-gray-600">
+          This claim has already been reviewed. Further actions are disabled.
+        </div>
+        {% endif %}
+      </div>
+
+      <div id="reject-panel" class="hidden rounded-2xl bg-white p-5 shadow-sm border border-red-100">
+        <h3 class="text-lg font-semibold text-gray-800 mb-3">Reject Claim</h3>
+        <form method="POST" class="space-y-3">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="reject">
+          <textarea name="reason" rows="4" required class="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-primary focus:outline-none" placeholder="Explain why the claim is being rejected"></textarea>
+          <div class="flex gap-3">
+            <button type="button" onclick="toggleActionPanel('reject-panel')" class="flex-1 rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">Cancel</button>
+            <button type="submit" class="flex-1 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700">Submit Rejection</button>
+          </div>
+        </form>
+      </div>
+
+      <div id="info-panel" class="hidden rounded-2xl bg-white p-5 shadow-sm border border-orange-100">
+        <h3 class="text-lg font-semibold text-gray-800 mb-3">Request More Info</h3>
+        <form method="POST" class="space-y-3">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="request_info">
+          <textarea name="reason" rows="4" required class="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-primary focus:outline-none" placeholder="List the missing documents or information needed"></textarea>
+          <div class="flex gap-3">
+            <button type="button" onclick="toggleActionPanel('info-panel')" class="flex-1 rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">Cancel</button>
+            <button type="submit" class="flex-1 rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-orange-600">Send Request</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function toggleActionPanel(panelId) {
+  const panel = document.getElementById(panelId);
+  panel.classList.toggle('hidden');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,150 @@
+"""
+Serializers for Insurance Claims.
+"""
+
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+from django.utils import timezone
+from rest_framework import serializers
+
+from .models import Claim
+
+
+class ClaimListSerializer(serializers.ModelSerializer):
+    """Serializer for listing claims."""
+    
+    user_email = serializers.CharField(source='user_id.email', read_only=True)
+    plan_name = serializers.CharField(source='plan_id.plan_name', read_only=True)
+    
+    class Meta:
+        model = Claim
+        fields = [
+            'claim_id', 'user_email', 'plan_name', 'claim_type',
+            'claim_amount', 'status', 'ai_flagged', 'submitted_at'
+        ]
+        read_only_fields = [
+            'claim_id', 'user_email', 'plan_name', 'submitted_at'
+        ]
+
+
+class ClaimDetailSerializer(serializers.ModelSerializer):
+    """Serializer for claim details."""
+    
+    user_email = serializers.CharField(source='user_id.email', read_only=True)
+    plan_name = serializers.CharField(source='plan_id.plan_name', read_only=True)
+    reviewed_by_name = serializers.CharField(
+        source='reviewed_by.full_name', read_only=True, allow_null=True
+    )
+    
+    class Meta:
+        model = Claim
+        fields = [
+            'claim_id', 'user_id', 'user_email', 'plan_id', 'plan_name',
+            'claim_type', 'claim_amount', 'description', 'documents',
+            'ai_verification', 'ai_flagged', 'status', 'reviewed_by',
+            'reviewed_by_name', 'decision_reason', 'payout_mpesa_ref',
+            'blockchain_hash', 'blockchain_tx', 'submitted_at', 'decided_at',
+            'paid_at'
+        ]
+        read_only_fields = [
+            'claim_id', 'user_id', 'ai_verification', 'blockchain_hash',
+            'blockchain_tx', 'submitted_at'
+        ]
+
+
+class ClaimSubmitSerializer(serializers.ModelSerializer):
+    """Serializer for submitting new claim."""
+    
+    documents = serializers.ListField(
+        child=serializers.FileField(),
+        required=True,
+        help_text="Up to 5 supporting documents"
+    )
+    
+    class Meta:
+        model = Claim
+        fields = [
+            'plan_id', 'claim_type', 'claim_amount', 'description', 'documents'
+        ]
+    
+    def validate_documents(self, value):
+        """Validate document count and size."""
+        if len(value) > 5:
+            raise serializers.ValidationError("Maximum 5 documents allowed")
+        
+        for doc in value:
+            if doc.size > 5 * 1024 * 1024:  # 5MB max
+                raise serializers.ValidationError(f"File too large: {doc.name}")
+        
+        return value
+    
+    def validate_description(self, value):
+        """Description must be at least 50 characters."""
+        if len(value) < 50:
+            raise serializers.ValidationError("Description must be at least 50 characters")
+        return value
+    
+    def validate_claim_amount(self, value):
+        """Claim amount must be positive."""
+        if value <= 0:
+            raise serializers.ValidationError("Claim amount must be positive")
+        return value
+    
+    def create(self, validated_data):
+        """Create claim with current user."""
+        documents = validated_data.pop('documents', [])
+        validated_data['user_id'] = self.context['request'].user
+        validated_data['status'] = 'submitted'
+
+        stored_documents = []
+        for document in documents:
+            storage_path = default_storage.save(
+                f'claims/{validated_data["user_id"].id}/{document.name}',
+                ContentFile(document.read())
+            )
+            stored_documents.append({
+                'label': document.name,
+                'url': default_storage.url(storage_path),
+            })
+
+        validated_data['documents'] = stored_documents
+
+        return Claim.objects.create(**validated_data)
+
+
+class ClaimReviewSerializer(serializers.ModelSerializer):
+    """Serializer for claims officer review."""
+    
+    class Meta:
+        model = Claim
+        fields = ['status', 'decision_reason']
+    
+    def validate(self, data):
+        """Validate claim can be reviewed."""
+        claim = self.instance
+        
+        if claim.status not in ['submitted', 'info_requested']:
+            raise serializers.ValidationError(
+                f"Can only review submitted/info_requested claims, not {claim.status}"
+            )
+        
+        if data['status'] not in ['approved', 'rejected', 'info_requested']:
+            raise serializers.ValidationError(
+                "Status must be approved, rejected, or info_requested"
+            )
+        
+        if data['status'] in ['approved', 'rejected'] and not data.get('decision_reason'):
+            raise serializers.ValidationError(
+                "Decision reason required for approval/rejection"
+            )
+        
+        return data
+    
+    def update(self, instance, validated_data):
+        """Update claim with review."""
+        instance.status = validated_data['status']
+        instance.decision_reason = validated_data.get('decision_reason')
+        instance.reviewed_by = self.context['request'].user
+        instance.decided_at = timezone.now()
+        instance.save()
+        return instance

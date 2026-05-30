@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}Explore Plans - BimaBora{% endblock %}
+{% block content %}
+<div class="container mx-auto px-4 py-5">
+  <div class="mb-6">
+    <h2 class="text-2xl font-bold text-gray-800 mb-1">Explore Coverage</h2>
+    <p class="text-gray-500 text-sm">Find the perfect protection plan for you.</p>
+  </div>
+
+  <!-- Tabs -->
+  <div class="flex border-b border-gray-200 mb-4">
+    {% for tab in tabs %}
+    <button onclick="switchTab('{{ tab.key }}')" id="tab-{{ tab.key }}"
+      class="flex-1 py-3 text-center font-semibold text-sm tab-btn {% if forloop.first %}text-primary border-b-2 border-primary{% else %}text-gray-400{% endif %}">
+      {{ tab.label }}
+    </button>
+    {% endfor %}
+  </div>
+
+  <!-- Plan Cards -->
+  {% for tab in tabs %}
+  <div id="plans-{{ tab.key }}" class="space-y-4 tab-content {% if not forloop.first %}hidden{% endif %}">
+    {% for plan in tab.plans %}
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden {% if plan.is_popular %}border-2 border-primary{% endif %}">
+      {% if plan.is_popular %}
+      <div class="bg-primary text-white text-center py-1 text-xs font-semibold">MOST POPULAR</div>
+      {% endif %}
+      <div class="p-4">
+        <div class="flex justify-between items-start mb-2">
+          <h3 class="font-bold text-gray-800">{{ plan.plan_name }}</h3>
+          <span class="bg-blue-50 text-primary text-xs font-semibold px-2 py-1 rounded-full">{{ plan.get_coverage_category_display }}</span>
+        </div>
+        <div class="flex items-baseline mb-3">
+          <span class="text-2xl font-bold text-gray-800">KSh {{ plan.base_rate }}</span>
+          <span class="text-gray-400 text-sm ml-1">/ base rate</span>
+        </div>
+        <div class="text-sm text-gray-500 mb-3">
+          Coverage: KSh {{ plan.min_coverage|floatformat:0 }} – KSh {{ plan.max_coverage|floatformat:0 }}
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <a href="{% url 'plan_detail' plan.plan_id %}" class="text-center border border-primary text-primary py-2.5 rounded-lg font-semibold text-sm hover:bg-blue-50 transition-colors">
+            View Details
+          </a>
+          <form method="POST" action="{% url 'select_plan' plan.plan_id %}">
+            {% csrf_token %}
+            <button type="submit" class="w-full bg-primary text-white py-2.5 rounded-lg font-semibold text-sm hover:bg-blue-600 transition-colors">
+              Select Plan
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="bg-white rounded-xl shadow-sm p-6 text-center">
+      <p class="text-gray-500 text-sm">No plans available in this category yet.</p>
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function switchTab(key) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+  document.querySelectorAll('.tab-btn').forEach(el => {
+    el.classList.remove('text-primary', 'border-b-2', 'border-primary');
+    el.classList.add('text-gray-400');
+  });
+  document.getElementById('plans-' + key).classList.remove('hidden');
+  const btn = document.getElementById('tab-' + key);
+  btn.classList.add('text-primary', 'border-b-2', 'border-primary');
+  btn.classList.remove('text-gray-400');
+}
+</script>
+{% endblock %}

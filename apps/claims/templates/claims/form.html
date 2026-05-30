@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block title %}Submit Claim - BimaBora{% endblock %}
+{% block content %}
+<div class="container mx-auto px-4 py-5">
+  <div class="mb-6">
+    <h2 class="text-2xl font-bold text-gray-800 mb-1">Submit a Claim</h2>
+    <p class="text-gray-500 text-sm">Complete the form to file your insurance claim.</p>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm p-4 mb-6">
+    <form method="POST" enctype="multipart/form-data" id="claimForm">
+      {% csrf_token %}
+      {% if errors %}
+      <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
+        {% for e in errors %}<p>{{ e }}</p>{% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-gray-700 font-semibold mb-1 text-sm">Claim Type</label>
+          <select name="claim_type" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:outline-none focus:ring-2 focus:ring-blue-100 text-sm">
+            <option value="">Select claim type</option>
+            <option value="medical">Medical</option>
+            <option value="accident">Accident</option>
+            <option value="death">Death</option>
+            <option value="property">Property</option>
+            <option value="income_loss">Income Loss</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-gray-700 font-semibold mb-1 text-sm">Claim Amount (KSh)</label>
+          <input type="number" name="claim_amount" required min="1" placeholder="Enter amount"
+            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:outline-none focus:ring-2 focus:ring-blue-100 text-sm">
+        </div>
+
+        <div>
+          <label class="block text-gray-700 font-semibold mb-1 text-sm">Description</label>
+          <textarea name="description" required rows="4" placeholder="Describe the incident in detail (minimum 50 characters)"
+            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:outline-none focus:ring-2 focus:ring-blue-100 text-sm"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-gray-700 font-semibold mb-1 text-sm">Upload Documents</label>
+          <input type="file" name="documents" multiple accept="image/*,.pdf"
+            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary text-sm">
+          <p class="text-xs text-gray-400 mt-1">Upload receipts, medical reports, or other supporting documents</p>
+        </div>
+
+        <button type="submit" class="w-full bg-primary text-white py-3 rounded-lg font-semibold text-sm hover:bg-blue-600 transition-colors">
+          Submit Claim
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Claims History -->
+  <div class="mb-6">
+    <h3 class="font-bold text-lg text-gray-800 mb-3">Your Claims</h3>
+    {% if claims %}
+    {% for claim in claims %}
+    <div class="bg-white rounded-xl shadow-sm p-4 mb-3">
+      <div class="flex justify-between items-start">
+        <div>
+          <p class="font-semibold text-gray-800 text-sm">{{ claim.claim_type|title }}</p>
+          <p class="text-gray-400 text-xs">{{ claim.submitted_at|date:"d M Y" }}</p>
+        </div>
+        <div class="text-right">
+          <span class="text-xs font-semibold px-2 py-1 rounded-full
+            {% if claim.status == 'approved' or claim.status == 'paid' %}bg-green-100 text-green-600
+            {% elif claim.status == 'under_review' %}bg-yellow-100 text-yellow-600
+            {% elif claim.status == 'rejected' %}bg-red-100 text-red-600
+            {% else %}bg-blue-100 text-blue-600{% endif %}">
+            {{ claim.get_status_display }}
+          </span>
+          <p class="text-gray-700 font-semibold text-sm mt-1">KSh {{ claim.claim_amount|floatformat:0 }}</p>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="bg-white rounded-xl shadow-sm p-4 text-center">
+      <p class="text-gray-500 text-sm">No claims submitted yet</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Login - BimaBora{% endblock %}
+{% block content %}
+<div class="min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-md bg-white rounded-xl shadow-sm p-6">
+    <div class="flex items-center justify-center mb-6">
+      <div class="h-12 w-12 rounded-md bg-primary flex items-center justify-center text-white font-bold mr-3">BB</div>
+      <h1 class="text-2xl font-bold text-primary">BimaBora</h1>
+    </div>
+    <h2 class="text-xl font-bold text-gray-800 text-center mb-1">Welcome back</h2>
+    <p class="text-gray-500 text-sm text-center mb-6">Login to manage your insurance</p>
+    {% if error %}
+    <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">Invalid email or password.</div>
+    {% endif %}
+    <form method="POST" class="space-y-4">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+      <div>
+        <label class="block text-gray-700 font-semibold mb-1 text-sm">Email Address</label>
+        <input type="email" name="username" required autofocus placeholder="you@example.com"
+          class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:outline-none focus:ring-2 focus:ring-blue-100 text-sm">
+      </div>
+      <div>
+        <label class="block text-gray-700 font-semibold mb-1 text-sm">Password</label>
+        <input type="password" name="password" required placeholder="••••••••"
+          class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:outline-none focus:ring-2 focus:ring-blue-100 text-sm">
+      </div>
+      <div class="text-right">
+        <a href="{% url 'password_reset_request' %}" class="text-sm text-primary font-semibold hover:underline">Forgot password?</a>
+      </div>
+      <button type="submit" class="w-full bg-primary text-white py-3 rounded-lg font-semibold hover:bg-blue-600 transition-colors text-sm">Login</button>
+      <p class="text-center text-sm text-gray-500">Don't have an account? <a href="{% url 'register' %}" class="text-primary font-semibold hover:underline">Register</a></p>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}{{ chama.group_name }} - BimaBora{% endblock %}
+{% block content %}
+<div class="container mx-auto px-4 py-5">
+  <div class="mb-4">
+    <a href="{% url 'chama' %}" class="text-primary text-sm font-semibold">← Back to Chamas</a>
+  </div>
+  <div class="bg-white rounded-xl shadow-sm p-4 mb-4">
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center">
+        <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-primary font-bold mr-3">
+          {{ chama.group_name|slice:":2"|upper }}
+        </div>
+        <div>
+          <h2 class="font-bold text-gray-800 text-lg">{{ chama.group_name }}</h2>
+          <p class="text-xs text-gray-400">Reg: {{ chama.registration_no }}</p>
+        </div>
+      </div>
+      <span class="bg-green-100 text-green-600 text-xs font-semibold px-2 py-1 rounded-full">{{ chama.get_status_display }}</span>
+    </div>
+    <div class="grid grid-cols-2 gap-4 py-3 border-t border-gray-100">
+      <div>
+        <p class="text-gray-400 text-xs">Admin</p>
+        <p class="font-semibold text-gray-800 text-sm">{{ chama.admin_id.full_name }}</p>
+      </div>
+      <div>
+        <p class="text-gray-400 text-xs">Members</p>
+        <p class="font-semibold text-gray-800 text-sm">{{ members.count }} / {{ chama.expected_members }}</p>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="font-bold text-gray-800 mb-3">Members</h3>
+  <div class="bg-white rounded-xl shadow-sm divide-y divide-gray-100">
+    {% for member in members %}
+    <div class="p-4 flex items-center justify-between">
+      <div class="flex items-center">
+        <div class="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-primary font-bold text-sm mr-3">
+          {{ member.user_id.full_name|slice:":1"|upper }}
+        </div>
+        <div>
+          <p class="font-semibold text-gray-800 text-sm">{{ member.user_id.full_name }}</p>
+          <p class="text-gray-400 text-xs">{{ member.user_id.phone_number }}</p>
+        </div>
+      </div>
+      <span class="text-xs font-semibold px-2 py-1 rounded-full bg-blue-50 text-primary">{{ member.get_member_role_display }}</span>
+    </div>
+    {% empty %}
+    <div class="p-6 text-center text-gray-400 text-sm">No members yet.</div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

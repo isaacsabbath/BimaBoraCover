@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}BimaBora Insurance{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#1F97E5',
+            'primary-dark': '#1976D2',
+            'primary-light': '#E3F2FD',
+            success: '#4CAF50',
+            warning: '#FFC107',
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+{% if user.is_authenticated %}
+<!-- Header -->
+<header class="bg-white shadow-sm sticky top-0 z-20">
+  <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+    <div class="flex items-center">
+      <div class="h-10 w-10 rounded-md bg-primary flex items-center justify-center text-white font-bold mr-2 text-sm">BB</div>
+      <span class="text-xl font-bold text-primary">BimaBora</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <a href="{% url 'profile' %}" class="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-primary font-bold text-sm">
+        {{ user.full_name|slice:":1"|upper }}
+      </a>
+    </div>
+  </div>
+</header>
+{% endif %}
+
+<!-- Toast -->
+<div id="toast" class="fixed top-4 right-4 z-50 hidden">
+  <div id="toast-msg" class="px-5 py-3 rounded-lg shadow-lg text-white text-sm font-medium"></div>
+</div>
+
+{% if messages %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    {% for message in messages %}
+    showToast('{{ message|escapejs }}', '{{ message.tags }}');
+    {% endfor %}
+  });
+</script>
+{% endif %}
+
+<main class="{% if user.is_authenticated %}pb-24{% endif %}">
+  {% block content %}{% endblock %}
+</main>
+
+{% if user.is_authenticated %}
+<!-- Bottom Nav -->
+<nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-20">
+  <div class="flex justify-around">
+    {% if user.role == 'claims_officer' %}
+      <a href="{% url 'claims_officer_dashboard' %}" class="py-3 flex flex-col items-center flex-1 {% if request.resolver_match.url_name == 'claims_officer_dashboard' %}text-primary{% else %}text-gray-400{% endif %}">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 6h18M3 14h18M3 18h18"/></svg>
+        <span class="text-xs mt-1">Claims</span>
+      </a>
+      <a href="{% url 'claims_officer_queue' %}" class="py-3 flex flex-col items-center flex-1 {% if request.resolver_match.url_name == 'claims_officer_queue' %}text-primary{% else %}text-gray-400{% endif %}">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m-8 5h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+        <span class="text-xs mt-1">KYC</span>
+      </a>
+      <a href="{% url 'payment' %}" class="py-3 flex flex-col items-center flex-1 {% if request.resolver_match.url_name == 'payment' %}text-primary{% else %}text-gray-400{% endif %}">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span class="text-xs mt-1">Pay</span>
+      </a>
+    {% else %}
+      <a href="{% url 'home' %}" class="py-3 flex flex-col items-center flex-1 {% if request.resolver_match.url_name == 'home' %}text-primary{% else %}text-gray-400{% endif %}">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        <span class="text-xs mt-1">Home</span>
+      </a>
+      <a href="{% url 'explore' %}" class="py-3 flex flex-col items-center flex-1 {% if request.resolver_match.url_name == 'explore' %}text-primary{% else %}text-gray-400{% endif %}">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <span class="text-xs mt-1">Explore</span>
+      </a>
+      <a href="{% url 'claim' %}" class="py-3 flex flex-col items-center flex-1 {% if request.resolver_match.url_name == 'claim' %}text-primary{% else %}text-gray-400{% endif %}">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <span class="text-xs mt-1">Claim</span>
+      </a>
+      <a href="{% url 'payment' %}" class="py-3 flex flex-col items-center flex-1 {% if request.resolver_match.url_name == 'payment' %}text-primary{% else %}text-gray-400{% endif %}">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span class="text-xs mt-1">Pay</span>
+      </a>
+      <a href="{% url 'chama' %}" class="py-3 flex flex-col items-center flex-1 {% if request.resolver_match.url_name == 'chama' %}text-primary{% else %}text-gray-400{% endif %}">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        <span class="text-xs mt-1">Chama</span>
+      </a>
+    {% endif %}
+  </div>
+</nav>
+{% endif %}
+
+<script>
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  const m = document.getElementById('toast-msg');
+  m.textContent = msg;
+  m.className = 'px-5 py-3 rounded-lg shadow-lg text-white text-sm font-medium ' +
+    (type === 'error' ? 'bg-red-500' : type === 'warning' ? 'bg-yellow-500' : 'bg-green-500');
+  t.classList.remove('hidden');
+  setTimeout(() => t.classList.add('hidden'), 3500);
+}
+function getCookie(name) {
+  let v = null;
+  document.cookie.split(';').forEach(c => {
+    c = c.trim();
+    if (c.startsWith(name + '=')) v = decodeURIComponent(c.slice(name.length + 1));
+  });
+  return v;
+}
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>
