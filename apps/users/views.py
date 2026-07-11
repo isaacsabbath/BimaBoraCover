@@ -5,6 +5,7 @@ API views + Template views for users app.
 import mimetypes
 import secrets
 import string
+import logging
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
@@ -27,13 +28,18 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.views import TokenObtainPairView as JWTTokenObtainPairView
 from rest_framework_simplejwt.views import TokenRefreshView
-from .models import User
+from .models import User, KYCDocument
+from .services.kyc_analyzer import KYCAnalyzerService
+from .services.azure_storage import AzureBlobStorageService
 from .serializers import (
     UserSerializer, UserDetailSerializer, RegisterSerializer,
     OTPVerifySerializer, TokenObtainPairSerializer,
     PasswordResetRequestSerializer, PasswordResetConfirmSerializer,
-    ProfileUpdateSerializer
+    ProfileUpdateSerializer, KYCDocumentSubmitSerializer,
+    KYCAnalysisDetailSerializer
 )
+
+logger = logging.getLogger(__name__)
 
 
 def _generate_temp_password(length=10):
@@ -78,7 +84,7 @@ class RegisterView(viewsets.ViewSet):
             {
                 "full_name": "John Doe",
                 "national_id": "12345678",
-                "phone_number": "+254712345678",
+                "phone_number": "254712345678",
                 "email": "user@example.com",
                 "password": "securepassword123",
                 "confirm_password": "securepassword123",
@@ -572,3 +578,228 @@ class PasswordResetView(viewsets.ViewSet):
                 'message': 'Password updated successfully.'
             })
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class KYCView(viewsets.ViewSet):
+    """KYC document analysis and verification endpoints."""
+    
+    permission_classes = [IsAuthenticated]
+    
+    @action(detail=False, methods=['post'])
+    def submit_document(self, request):
+        """
+        Submit a KYC ID document for analysis.
+        
+        Multipart form data:
+            {
+                "document_file": <file>,
+                "document_type": "national_id"
+            }
+            
+        Returns:
+            {
+                "success": true,
+                "kyc_document_id": "...",
+                "extracted_data": {...},
+                "verification_result": {...},
+                "summary": "...",
+                "kyc_status": "verified"
+            }
+        """
+        serializer = KYCDocumentSubmitSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            # Step 1: Create KYCDocument record in database
+            kyc_document = KYCDocument.objects.create(
+                user=request.user,
+                document_type=serializer.validated_data['document_type'],
+                uploaded_file=serializer.validated_data['document_file'],
+                upload_status=KYCDocument.UploadStatusChoices.PENDING
+            )
+            
+            logger.info(f"Created KYCDocument record {kyc_document.id} for user {request.user.id}")
+            
+            # Step 2: Upload to Azure Blob Storage
+            try:
+                blob_service = AzureBlobStorageService()
+                document_url = blob_service.upload_kyc_document(
+                    file_obj=serializer.validated_data['document_file'],
+                    document_type=serializer.validated_data['document_type'],
+                    user_id=request.user.id,
+                    filename=serializer.validated_data['document_file'].name
+                )
+                
+                kyc_document.document_url = document_url
+                kyc_document.upload_status = KYCDocument.UploadStatusChoices.UPLOADED
+                kyc_document.uploaded_at = timezone.now()
+                kyc_document.save()
+                
+                logger.info(
+                    f"Successfully uploaded KYC document {kyc_document.id} to: {document_url}"
+                )
+            
+            except Exception as e:
+                kyc_document.upload_status = KYCDocument.UploadStatusChoices.FAILED
+                kyc_document.save()
+                logger.error(f"Failed to upload KYC document {kyc_document.id}: {str(e)}")
+                
+                return Response(
+                    {
+                        'success': False,
+                        'error': f'Failed to upload document to storage: {str(e)}'
+                    },
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+            
+            # Step 3: Analyze the document
+            try:
+                analyzer = KYCAnalyzerService()
+                analysis_result = analyzer.analyze_id_document(document_url)
+                
+                if not analysis_result['success']:
+                    kyc_document.upload_status = KYCDocument.UploadStatusChoices.FAILED
+                    kyc_document.save()
+                    
+                    return Response(
+                        {
+                            'success': False,
+                            'error': analysis_result['error'],
+                            'kyc_document_id': str(kyc_document.id)
+                        },
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                # Extract and verify data
+                extracted_data = analysis_result['data']
+                user_data = {
+                    'full_name': request.user.full_name,
+                    'national_id': request.user.national_id,
+                    'phone_number': request.user.phone_number
+                }
+                
+                verification_result = analyzer.verify_kyc_data(
+                    extracted_data,
+                    user_data
+                )
+                
+                # Generate summary
+                summary = analyzer.format_extraction_summary(extracted_data)
+                
+                # Store analysis result in KYCDocument
+                kyc_document.analysis_result = {
+                    'extracted_data': extracted_data,
+                    'verification_result': verification_result,
+                    'summary': summary
+                }
+                kyc_document.upload_status = KYCDocument.UploadStatusChoices.ANALYZED
+                kyc_document.analyzed_at = timezone.now()
+                kyc_document.save()
+                
+                # Update User KYC status
+                request.user.kyc_verification_result = {
+                    'extracted_data': extracted_data,
+                    'verification_result': verification_result,
+                    'kyc_document_id': str(kyc_document.id),
+                    'document_url': document_url,
+                    'submitted_at': timezone.now().isoformat()
+                }
+                
+                # Update KYC status based on verification
+                if verification_result['verified'] and not verification_result['flags']:
+                    request.user.kyc_status = User.KYCStatusChoices.VERIFIED
+                    request.user.kyc_verified_at = timezone.now()
+                elif verification_result['flags']:
+                    request.user.kyc_status = User.KYCStatusChoices.FLAGGED
+                else:
+                    request.user.kyc_status = User.KYCStatusChoices.REVIEW
+                
+                request.user.save()
+                
+                logger.info(
+                    f"KYC document analyzed for user {request.user.id}: "
+                    f"verified={verification_result['verified']}, "
+                    f"flags={verification_result['flags']}"
+                )
+                
+                # Prepare response
+                response_data = {
+                    'success': True,
+                    'kyc_document_id': str(kyc_document.id),
+                    'extracted_data': extracted_data,
+                    'verification_result': verification_result,
+                    'summary': summary,
+                    'kyc_status': request.user.kyc_status,
+                    'message': 'Document uploaded and analyzed successfully.'
+                }
+                
+                return Response(response_data, status=status.HTTP_200_OK)
+            
+            except Exception as e:
+                kyc_document.upload_status = KYCDocument.UploadStatusChoices.FAILED
+                kyc_document.save()
+                logger.error(f"Error analyzing KYC document {kyc_document.id}: {str(e)}")
+                
+                return Response(
+                    {
+                        'success': False,
+                        'error': f'Failed to analyze document: {str(e)}',
+                        'kyc_document_id': str(kyc_document.id)
+                    },
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+        
+        except Exception as e:
+            logger.error(f"Error in KYC submission for user {request.user.id}: {str(e)}")
+            return Response(
+                {
+                    'success': False,
+                    'error': f'Unexpected error during document submission: {str(e)}'
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['get'])
+    def status(self, request):
+        """Get current KYC status and verification result."""
+        return Response({
+            'kyc_status': request.user.kyc_status,
+            'kyc_verified_at': request.user.kyc_verified_at,
+            'verification_result': request.user.kyc_verification_result
+        })
+    
+    @action(detail=False, methods=['get'])
+    def documents(self, request):
+        """Get all KYC documents uploaded by the user."""
+        documents = KYCDocument.objects.filter(user=request.user).values(
+            'id', 'document_type', 'upload_status', 'created_at', 'uploaded_at', 'analyzed_at'
+        )
+        return Response({
+            'count': documents.count(),
+            'documents': list(documents)
+        })
+    
+    @action(detail='id', methods=['get'])
+    def document_detail(self, request, id=None):
+        """Get details of a specific KYC document."""
+        try:
+            kyc_doc = KYCDocument.objects.get(id=id, user=request.user)
+            return Response({
+                'id': str(kyc_doc.id),
+                'document_type': kyc_doc.document_type,
+                'upload_status': kyc_doc.upload_status,
+                'document_url': kyc_doc.document_url,
+                'analysis_result': kyc_doc.analysis_result,
+                'created_at': kyc_doc.created_at,
+                'uploaded_at': kyc_doc.uploaded_at,
+                'analyzed_at': kyc_doc.analyzed_at
+            })
+        except KYCDocument.DoesNotExist:
+            return Response(
+                {'error': 'KYC document not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )

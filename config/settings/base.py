@@ -6,10 +6,12 @@ Base settings shared between local and production environments.
 import os
 from datetime import timedelta
 from pathlib import Path
-from decouple import config, Csv
+from decouple import Config, RepositoryEnv, Csv
+import dj_database_url
 
 # Build paths
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+config = Config(RepositoryEnv(BASE_DIR / '.env'))
 
 # Security
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-dev-key-change-me')
@@ -71,16 +73,27 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 # Database
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME', default='bima_afya'),
-        'USER': config('DB_USER', default='postgres'),
-        'PASSWORD': config('DB_PASSWORD', default='password'),
-        'HOST': config('DB_HOST', default='localhost'),
-        'PORT': config('DB_PORT', default='5432'),
+DATABASE_URL = config('DATABASE_URL', default=None)
+
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': config('DB_NAME', default='postgres'),
+            'USER': config('DB_USER', default='postgres.arqvnmkhmebctsadjltz'),
+            'PASSWORD': config('DB_PASSWORD', default='0741082524bima'),
+            'HOST': config('DB_HOST', default='aws-0-eu-west-1.pooler.supabase.com'),
+            'PORT': config('DB_PORT', default='5432'),
+        }
+    }
 
 # Authentication
 AUTH_USER_MODEL = 'users.User'

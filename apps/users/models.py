@@ -114,3 +114,72 @@ class User(AbstractBaseUser, PermissionsMixin):
     def has_kyc_verified(self):
         """Check if user has verified KYC."""
         return self.kyc_status == self.KYCStatusChoices.VERIFIED
+
+
+class KYCDocument(models.Model):
+    """Model to track uploaded KYC documents and their analysis results."""
+    
+    class DocumentTypeChoices(models.TextChoices):
+        NATIONAL_ID = 'national_id', 'National ID'
+        PASSPORT = 'passport', 'Passport'
+        DRIVERS_LICENSE = 'drivers_license', "Driver's License"
+    
+    class UploadStatusChoices(models.TextChoices):
+        PENDING = 'pending', 'Pending Upload'
+        UPLOADED = 'uploaded', 'Uploaded to Storage'
+        ANALYZED = 'analyzed', 'Analysis Complete'
+        FAILED = 'failed', 'Upload/Analysis Failed'
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='kyc_documents')
+    
+    # Document details
+    document_type = models.CharField(
+        max_length=30,
+        choices=DocumentTypeChoices.choices,
+        default=DocumentTypeChoices.NATIONAL_ID
+    )
+    
+    # File storage
+    uploaded_file = models.FileField(
+        upload_to='kyc-documents/%Y/%m/%d/',
+        help_text='Uploaded KYC document file'
+    )
+    
+    # Blob storage URL
+    document_url = models.URLField(
+        blank=True,
+        null=True,
+        help_text='Azure Blob Storage URL after upload'
+    )
+    
+    # Upload status
+    upload_status = models.CharField(
+        max_length=20,
+        choices=UploadStatusChoices.choices,
+        default=UploadStatusChoices.PENDING
+    )
+    
+    # Analysis result from Azure
+    analysis_result = models.JSONField(
+        null=True,
+        blank=True,
+        help_text='Complete analysis result from Azure Document Intelligence'
+    )
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    uploaded_at = models.DateTimeField(null=True, blank=True)
+    analyzed_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        db_table = 'users_kyc_document'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['upload_status']),
+        ]
+    
+    def __str__(self):
+        return f"{self.user.email} - {self.document_type} ({self.upload_status})"

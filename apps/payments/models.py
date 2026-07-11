@@ -56,6 +56,8 @@ class Payment(models.Model):
     failure_reason = models.TextField(blank=True)
     initiated_at = models.DateTimeField(auto_now_add=True)
     confirmed_at = models.DateTimeField(null=True, blank=True)
+    metadata = models.JSONField(default=dict, blank=True, null=True)
+
 
     class Meta:
         db_table = 'payments_payment'

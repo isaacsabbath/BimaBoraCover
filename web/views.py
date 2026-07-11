@@ -10,6 +10,7 @@ from apps.users.models import User
 from apps.plans.models import InsurancePlan, Policy
 from apps.claims.models import Claim
 from apps.payments.models import Payment
+from apps.payments.services.daraja import DarajaClient
 from apps.chamas.models import Chama, ChamaMember
 
 
@@ -182,20 +183,17 @@ def payment_view(request):
             status='pending',
         )
 
-        # Initiate UMS Pay STK Push
+        # Initiate Daraja STK Push
         try:
-            import os, requests as req
-            resp = req.post('https://api.umspay.co.ke/api/v1/initiatestkpush', json={
-                'api_key': os.environ.get('UMSPAY_API_KEY', ''),
-                'email': os.environ.get('UMSPAY_EMAIL', ''),
-                'amount': int(float(amount)),
-                'msisdn': phone,
-                'reference': str(payment.payment_id),
-                'account_id': os.environ.get('UMSPAY_ACCOUNT_ID', ''),
-            }, timeout=30)
-            data = resp.json()
-            if data.get('success') == '200' or data.get('transaction_request_id'):
-                payment.mpesa_ref = data.get('transaction_request_id', '')
+            daraja = DarajaClient()
+            response = daraja.stk_push(
+                phone_number=phone,
+                amount=int(float(amount)),
+                reference=str(payment.payment_id),
+                description='Payment for insurance plan/premium'
+            )
+            if response.get('ResponseCode') == '0' and response.get('CheckoutRequestID'):
+                payment.mpesa_ref = response.get('CheckoutRequestID', '')
                 payment.save()
                 if is_ajax:
                     return JsonResponse({'success': True, 'message': 'STK push sent. Check your phone to complete payment.'})
@@ -203,11 +201,18 @@ def payment_view(request):
                 return redirect('web:payment')
             else:
                 payment.status = 'failed'
-                payment.failure_reason = data.get('errorMessage', 'Unknown error')
+                payment.failure_reason = response.get('ResponseDescription', 'Unknown error')
                 payment.save()
                 if is_ajax:
                     return JsonResponse({'success': False, 'error': payment.failure_reason})
                 messages.error(request, payment.failure_reason)
+        except ValueError as e:
+            payment.status = 'failed'
+            payment.failure_reason = str(e)
+            payment.save()
+            if is_ajax:
+                return JsonResponse({'success': False, 'error': str(e)})
+            messages.error(request, str(e))
         except Exception as e:
             payment.status = 'failed'
             payment.failure_reason = str(e)

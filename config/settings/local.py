@@ -5,15 +5,15 @@ Local development settings.
 from .base import *  # noqa
 
 DEBUG = True
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.ngrok-free.app']
 
-# Use SQLite for local development
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
 
 # Email backend for local testing
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
@@ -37,7 +37,7 @@ Q_CLUSTER = {
     'retry': 600,
     'queue_limit': 10,
     'bulk': 5,
-    'orm': 'default',  # Use Django ORM with SQLite
+    'orm': 'default',
     'catch_up': False,
     'debug': True,
 }

@@ -68,9 +68,17 @@ class RegisterSerializer(serializers.ModelSerializer):
     
     def validate_phone_number(self, value):
         """Validate phone number format."""
-        if not re.match(r'^\+254\d{9}$', value):
+        value = value.strip().replace(' ', '').replace('-', '')
+
+        if value.startswith('+254'):
+            value = value[1:]
+
+        if value.startswith('07'):
+            value = '254' + value[1:]
+
+        if not re.match(r'^254\d{9}$', value):
             raise serializers.ValidationError(
-                'Phone number must be in format +254XXXXXXXXX'
+                'Phone number must be in format 07XXXXXXXX or 254XXXXXXXXX'
             )
         if User.objects.filter(phone_number=value).exists():
             raise serializers.ValidationError('This phone number is already registered.')
@@ -210,3 +218,80 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['full_name', 'phone_number']
+
+
+class KYCDocumentSubmitSerializer(serializers.Serializer):
+    """Serializer for uploading and submitting KYC documents."""
+    
+    document_file = serializers.FileField(
+        help_text='ID document image (PNG, JPG, PDF - max 10MB)'
+    )
+    document_type = serializers.ChoiceField(
+        choices=['national_id', 'passport', 'drivers_license'],
+        default='national_id',
+        help_text='Type of ID document being submitted'
+    )
+    
+    def validate_document_file(self, value):
+        """Validate file size and type."""
+        # Check file size (max 10MB)
+        max_size = 10 * 1024 * 1024  # 10MB
+        if value.size > max_size:
+            raise serializers.ValidationError(
+                f'File size must not exceed 10MB. Current size: {value.size / 1024 / 1024:.2f}MB'
+            )
+        
+        # Check file type
+        allowed_extensions = ['jpg', 'jpeg', 'png', 'pdf', 'tiff', 'bmp']
+        filename = value.name.lower()
+        ext = filename.split('.')[-1] if '.' in filename else ''
+        
+        if ext not in allowed_extensions:
+            raise serializers.ValidationError(
+                f'File type not allowed. Allowed types: {", ".join(allowed_extensions)}'
+            )
+        
+        return value
+
+
+class KYCVerificationResultSerializer(serializers.Serializer):
+    """Serializer for KYC verification results."""
+    
+    verified = serializers.BooleanField()
+    flags = serializers.ListField(
+        child=serializers.CharField(),
+        help_text='List of flags raised (e.g., ID_EXPIRED, LOW_CONFIDENCE)'
+    )
+    mismatches = serializers.ListField(
+        child=serializers.DictField(),
+        help_text='List of mismatches between extracted and registered data'
+    )
+    confidence_score = serializers.FloatField(
+        help_text='Average confidence score from document analysis (0-1)'
+    )
+    
+    
+class KYCAnalysisDetailSerializer(serializers.Serializer):
+    """Detailed serializer for KYC analysis response."""
+    
+    success = serializers.BooleanField()
+    error = serializers.CharField(required=False, allow_blank=True)
+    extracted_data = serializers.DictField(required=False)
+    verification_result = KYCVerificationResultSerializer(required=False)
+    summary = serializers.CharField(
+        required=False,
+        help_text='Human-readable summary of extracted information'
+    )
+
+
+class KYCDocumentDetailSerializer(serializers.Serializer):
+    """Serializer for KYC document details."""
+    
+    id = serializers.CharField()
+    document_type = serializers.CharField()
+    upload_status = serializers.CharField()
+    document_url = serializers.URLField(required=False)
+    analysis_result = serializers.DictField(required=False)
+    created_at = serializers.DateTimeField()
+    uploaded_at = serializers.DateTimeField(required=False)
+    analyzed_at = serializers.DateTimeField(required=False)

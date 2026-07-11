@@ -6,6 +6,7 @@ django-cors-headers==4.3.1
 psycopg[binary]>=3.2
 python-decouple==3.8
 google-cloud-documentai==2.29.0
+azure-ai-documentintelligence==1.0.0
 requests==2.31.0
 africastalking==1.2.3
 weasyprint==60.1
@@ -19,3 +20,4 @@ pytest==7.4.3
 pytest-django==4.7.0
 pytest-cov==4.1.0
 factory-boy==3.3.0
+dj-database-url==3.1.2

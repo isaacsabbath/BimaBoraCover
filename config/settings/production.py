@@ -3,6 +3,7 @@ Production settings for Azure deployment.
 """
 
 from .base import *  # noqa
+import dj_database_url
 
 DEBUG = False
 ALLOWED_HOSTS = [
@@ -22,20 +23,27 @@ SECURE_CONTENT_SECURITY_POLICY = {
 
 # Database
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME'),
-        'USER': config('DB_USER'),
-        'PASSWORD': config('DB_PASSWORD'),
-        'HOST': config('DB_HOST'),
-        'PORT': config('DB_PORT', default='5432'),
-        'CONN_MAX_AGE': 600,
-    }
+  'default': {
+    'ENGINE': 'django.db.backends.postgresql',
+      'NAME': config('DB_NAME', default='postgres'),
+      'USER': config('DB_USER', default='postgres'),
+      'PASSWORD': config('DB_PASSWORD', default=''),
+      'HOST': config('DB_HOST', default='localhost'),
+    'PORT': config('DB_PORT', default='5432'),
+    'CONN_MAX_AGE': 600,
+    'OPTIONS': {'sslmode': 'require'},
+  }
 }
-
 # Static files with Azure
 STATIC_URL = 'https://{}.blob.core.windows.net/static/'.format(AZURE_ACCOUNT_NAME)
-STATICFILES_STORAGE = 'storages.backends.azure_storage.AzureStorage'
+STORAGES['staticfiles'] = {
+  'BACKEND': 'storages.backends.azure_storage.AzureStorage',
+  'OPTIONS': {
+    'account_name': AZURE_ACCOUNT_NAME,
+    'account_key': AZURE_ACCOUNT_KEY,
+    'azure_container_name': AZURE_CONTAINER,
+  },
+}
 
 # Email via SendGrid or similar
 EMAIL_BACKEND = config(

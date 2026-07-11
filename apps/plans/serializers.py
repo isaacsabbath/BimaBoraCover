@@ -72,7 +72,9 @@ class InsurancePlanCreateUpdateSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         """Auto-set created_by to current user."""
-        validated_data['created_by'] = self.context['request'].user
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            validated_data['created_by'] = request.user
         return super().create(validated_data)
 
 

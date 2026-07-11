@@ -21,6 +21,19 @@ class DarajaClient:
         self.passkey = settings.DARAJA_PASSKEY
         self.access_token = None
         self.token_expires_at = None
+
+    def _validate_stk_push_config(self):
+        """Validate STK Push settings before calling Daraja."""
+        callback_url = getattr(settings, 'DARAJA_CALLBACK_URL', '').strip()
+        if not callback_url:
+            raise ValueError('DARAJA_CALLBACK_URL is not set')
+        if callback_url.startswith('http://localhost') or callback_url.startswith('http://127.0.0.1'):
+            raise ValueError('DARAJA_CALLBACK_URL must be a public HTTPS URL, not localhost')
+        if 'your-ngrok-url' in callback_url:
+            raise ValueError('DARAJA_CALLBACK_URL is still a placeholder. Set it to a public HTTPS callback URL')
+        if not callback_url.startswith('https://'):
+            raise ValueError('DARAJA_CALLBACK_URL must use HTTPS')
+        return callback_url
     
     def get_access_token(self):
         """Get OAuth 2.0 access token from Daraja."""
@@ -60,6 +73,7 @@ class DarajaClient:
         Returns:
             dict with CheckoutRequestID and ResponseCode
         """
+        callback_url = self._validate_stk_push_config()
         token = self.get_access_token()
         
         url = f"{self.BASE_URL}/mpesa/stkpush/v1/processrequest"
@@ -78,7 +92,7 @@ class DarajaClient:
             "PartyA": phone_number,
             "PartyB": self.shortcode,
             "PhoneNumber": phone_number,
-            "CallBackURL": settings.DARAJA_CALLBACK_URL,
+            "CallBackURL": callback_url,
             "AccountReference": str(reference),
             "TransactionDesc": description
         }
@@ -90,8 +104,17 @@ class DarajaClient:
         
         try:
             response = requests.post(url, json=payload, headers=headers, timeout=10)
-            response.raise_for_status()
-            return response.json()
+            try:
+                data = response.json()
+            except ValueError:
+                data = {'raw_response': response.text}
+
+            if response.status_code >= 400:
+                raise ValueError(
+                    f"STK push rejected by Daraja: {data.get('errorMessage') or data.get('raw_response') or response.text}"
+                )
+
+            return data
         
         except requests.exceptions.RequestException as e:
             raise ValueError(f"STK push failed: {str(e)}")

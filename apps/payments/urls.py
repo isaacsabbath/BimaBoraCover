@@ -7,6 +7,6 @@ router = DefaultRouter()
 router.register(r'', PaymentViewSet, basename='payment')
 
 urlpatterns = [
+    path('callback/', mpesa_callback, name='mpesa-callback'),  # must come BEFORE router
     path('', include(router.urls)),
-    path('callback/', mpesa_callback, name='mpesa-callback'),
 ]

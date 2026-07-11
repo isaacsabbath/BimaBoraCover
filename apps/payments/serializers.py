@@ -11,7 +11,7 @@ class PaymentInitiateSerializer(serializers.Serializer):
     
     phone_number = serializers.CharField(
         max_length=15,
-        help_text="Phone number in format 254XXXXXXXXX"
+        help_text="Phone number in format 07XXXXXXXX or 254XXXXXXXXX"
     )
     amount = serializers.DecimalField(
         max_digits=12,
@@ -23,10 +23,18 @@ class PaymentInitiateSerializer(serializers.Serializer):
     
     def validate_phone_number(self, value):
         """Validate Kenyan phone number format."""
+        value = value.strip().replace(' ', '').replace('-', '')
+
+        if value.startswith('+254'):
+            value = value[1:]
+
+        if value.startswith('07'):
+            value = '254' + value[1:]
+
         if not value.startswith('254'):
-            raise serializers.ValidationError("Phone must start with 254 (Kenya)")
+            raise serializers.ValidationError("Phone must start with 07 or 254")
         if len(value) != 12:
-            raise serializers.ValidationError("Phone must be exactly 12 digits")
+            raise serializers.ValidationError("Phone must be exactly 12 digits after normalization")
         return value
 
 
