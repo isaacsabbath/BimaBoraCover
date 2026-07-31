@@ -25,6 +25,8 @@ from apps.claims.serializers import (
     ClaimSubmitSerializer, ClaimReviewSerializer
 )
 from apps.payments.services.daraja import DarajaClient
+from apps.claims.services.invoice_analyzer import InvoiceAnalyzerService
+from apps.users.services.azure_storage import AzureBlobStorageService
 
 logger = logging.getLogger(__name__)
 
@@ -111,6 +113,78 @@ def _ai_summary(ai_verification):
         return summary
 
     return [{'label': 'Result', 'value': ai_verification}]
+
+
+def await_ai_analysis(claim, uploaded_files):
+    """
+    Process uploaded invoice documents with Azure AI Document Intelligence using custom models.
+    
+    Args:
+        claim: Claim instance
+        uploaded_files: List of uploaded file objects
+    """
+    if not uploaded_files:
+        return
+    
+    try:
+        # Initialize Azure Blob Storage service for document upload
+        blob_storage_service = AzureBlobStorageService()
+        
+        # Initialize Azure AI Document Intelligence service with custom model
+        # Note: In production, you would specify your custom model name here
+        invoice_analyzer = InvoiceAnalyzerService(model_name="your-custom-model-name")
+        
+        # Process each uploaded file
+        ai_verification_results = []
+        ai_flagged = False
+        
+        for uploaded_file in uploaded_files:
+            try:
+                # Upload file to Azure Blob Storage
+                blob_url = blob_storage_service.upload_kyc_document(
+                    file_obj=uploaded_file,
+                    document_type="invoice",
+                    user_id=claim.user_id.id,
+                    filename=uploaded_file.name
+                )
+                
+                # Analyze with Azure AI Document Intelligence using custom model
+                # You can specify custom fields to extract here
+                custom_fields = ["invoice_number", "total_amount", "vendor_name", "customer_name", "invoice_date"]
+                result = invoice_analyzer.analyze_invoice(blob_url, custom_fields=custom_fields)
+                
+                if result['success']:
+                    ai_verification_results.append(result['data'])
+                    
+                    # Check if any fields were flagged or confidence is low
+                    if result['data'].get('confidence_score', 0) < 0.8:
+                        ai_flagged = True
+                        
+                    # Check for specific invoice validation issues
+                    invoice_data = result['data']
+                    if invoice_data.get('total_amount') and float(invoice_data['total_amount']['value']) <= 0:
+                        ai_flagged = True
+                        
+                    if invoice_data.get('vendor_name') and invoice_data['vendor_name'].get('confidence', 0) < 0.7:
+                        ai_flagged = True
+                else:
+                    logger.warning(f"Failed to analyze invoice {uploaded_file.name}: {result['error']}")
+                    
+            except Exception as file_error:
+                logger.error(f"Error processing file {uploaded_file.name}: {str(file_error)}")
+                # Continue processing other files even if one fails
+        
+        # Store AI verification results
+        if ai_verification_results:
+            claim.ai_verification = ai_verification_results
+            claim.ai_flagged = ai_flagged
+            claim.save(update_fields=['ai_verification', 'ai_flagged'])
+            
+            logger.info(f"Processed {len(uploaded_files)} invoice documents for claim {claim.claim_id}")
+            
+    except Exception as e:
+        logger.error(f"Error processing invoice documents for claim {claim.claim_id}: {str(e)}")
+        # Don't fail the claim creation if AI analysis fails
 
 
 def _attach_claim_context(claim):
@@ -253,6 +327,9 @@ class ClaimViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         
         claim = serializer.save()
+        
+        # Process uploaded documents with Azure AI Document Intelligence
+        await_ai_analysis(claim, request.FILES.getlist('documents'))
         
         # TODO: Trigger async GCP Document AI task for verification
         # For now, mark as under_review

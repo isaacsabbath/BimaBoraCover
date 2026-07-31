@@ -9,11 +9,17 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.ngrok-free.app']
 
 
 DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'isaac',                      
+        'USER': 'isaac',
+        'PASSWORD': 'Lubuntu@123',
+        'DBNAME': 'isaac',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
+}
+
 
 # Email backend for local testing
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

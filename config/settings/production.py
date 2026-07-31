@@ -41,7 +41,7 @@ STORAGES['staticfiles'] = {
   'OPTIONS': {
     'account_name': AZURE_ACCOUNT_NAME,
     'account_key': AZURE_ACCOUNT_KEY,
-    'azure_container_name': AZURE_CONTAINER,
+    'azure_container': AZURE_CONTAINER,   # ← fixed: was azure_container_name
   },
 }
 

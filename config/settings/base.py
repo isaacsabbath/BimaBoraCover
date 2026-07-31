@@ -105,6 +105,7 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
+
 # Internationalization
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Africa/Nairobi'
@@ -203,7 +204,7 @@ if USE_AZURE_STORAGE:
             'OPTIONS': {
                 'account_name': AZURE_ACCOUNT_NAME,
                 'account_key': AZURE_ACCOUNT_KEY,
-                'azure_container_name': AZURE_CONTAINER,
+                'azure_container': AZURE_CONTAINER,   # ← fixed: was azure_container_name
             }
         },
         'staticfiles': {
@@ -219,7 +220,6 @@ else:
             'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
         }
     }
-
 # Email Configuration
 EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
 EMAIL_HOST = config('EMAIL_HOST', default='localhost')

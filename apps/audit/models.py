@@ -37,13 +37,13 @@ class AuditLog(models.Model):
         ]
     
     def save(self, *args, **kwargs):
-        """Override save to prevent updates."""
-        if self.pk:
+    # Override save to prevent updates.
+        if not self._state.adding:
             raise ValueError("AuditLog records cannot be modified after creation")
         super().save(*args, **kwargs)
     
     def delete(self, *args, **kwargs):
-        """Override delete to prevent deletions."""
+        # Override delete to prevent deletions."""
         raise ValueError("AuditLog records cannot be deleted")
     
     def __str__(self):

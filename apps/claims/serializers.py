@@ -109,7 +109,13 @@ class ClaimSubmitSerializer(serializers.ModelSerializer):
 
         validated_data['documents'] = stored_documents
 
-        return Claim.objects.create(**validated_data)
+        claim = Claim.objects.create(**validated_data)
+        
+        # Process documents with Azure AI Document Intelligence
+        from apps.claims.views import await_ai_analysis
+        await_ai_analysis(claim, documents)
+        
+        return claim
 
 
 class ClaimReviewSerializer(serializers.ModelSerializer):
