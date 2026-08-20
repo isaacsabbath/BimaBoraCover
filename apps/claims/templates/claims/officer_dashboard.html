@@ -29,14 +29,14 @@
       </div>
     </a>
 
-    <a href="{% url 'payment' %}" class="rounded-2xl border border-green-200 bg-green-50 p-4 shadow-sm hover:bg-green-100 transition-colors">
+    <a href="{% url 'claims_officer_payouts' %}" class="rounded-2xl border border-green-200 bg-green-50 p-4 shadow-sm hover:bg-green-100 transition-colors">
       <p class="text-xs font-semibold uppercase tracking-[0.2em] text-green-700">Payments</p>
       <div class="mt-2 flex items-end justify-between gap-4">
         <div>
-          <p class="text-3xl font-bold text-green-900">B2C</p>
-          <p class="text-sm text-green-800">Initiate payout processing after claim approval.</p>
+          <p class="text-3xl font-bold text-green-900">{{ pending_payouts_count }}</p>
+          <p class="text-sm text-green-800">Approved claims awaiting B2C payout — retry failed ones here.</p>
         </div>
-        <span class="rounded-full bg-green-600 px-3 py-1 text-xs font-semibold text-white">Go to payments</span>
+        <span class="rounded-full bg-green-600 px-3 py-1 text-xs font-semibold text-white">Pending payouts</span>
       </div>
     </a>
   </div>

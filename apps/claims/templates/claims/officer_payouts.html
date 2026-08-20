@@ -1,0 +1,61 @@
+<!-- For beginners: This template (apps/claims/templates/claims/officer_payouts.html) defines what users see in the browser. -->
+<!-- For beginners: Dynamic values are inserted by Django views before this HTML is sent. -->
+
+{% extends 'base.html' %}
+{% block title %}Pending Payouts - BimaBora{% endblock %}
+{% block content %}
+<div class="container mx-auto px-4 py-5">
+  <div class="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-warning">Claims Officer</p>
+      <h1 class="text-2xl font-bold text-gray-800">Pending Payouts</h1>
+      <p class="text-sm text-gray-500">Claims that were approved but whose B2C payout hasn't gone through yet. Retry the payout once M-Pesa/Daraja is reachable.</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="{% url 'claims_officer_dashboard' %}" class="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">Back to queue</a>
+      <div class="rounded-xl bg-white px-4 py-3 shadow-sm border border-gray-100">
+        <p class="text-xs text-gray-400">Awaiting payout</p>
+        <p class="text-2xl font-bold text-gray-800">{{ claims|length }}</p>
+      </div>
+    </div>
+  </div>
+
+  {% if claims %}
+  <div class="space-y-4">
+    {% for claim in claims %}
+    <div class="rounded-2xl border border-gray-200 bg-white shadow-sm">
+      <div class="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex-1">
+          <div class="flex flex-wrap items-center gap-2 mb-2">
+            <h2 class="text-base font-semibold text-gray-800">{{ claim.user_id.full_name }}</h2>
+            <span class="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-800">Approved — payout pending</span>
+          </div>
+          <div class="grid grid-cols-1 gap-2 text-sm text-gray-600 sm:grid-cols-4">
+            <p><span class="font-medium text-gray-800">Type:</span> {{ claim.get_claim_type_display }}</p>
+            <p><span class="font-medium text-gray-800">Amount:</span> KES {{ claim.claim_amount|floatformat:0 }}</p>
+            <p><span class="font-medium text-gray-800">Approved:</span> {{ claim.decided_at|date:"d M Y, H:i" }}</p>
+            <p><span class="font-medium text-gray-800">Phone:</span> {{ claim.user_id.phone_number }}</p>
+          </div>
+          {% if claim.decision_reason %}
+          <p class="mt-2 text-xs text-gray-500"><span class="font-medium text-gray-700">Reviewer note:</span> {{ claim.decision_reason }}</p>
+          {% endif %}
+        </div>
+        <div class="flex shrink-0 items-center gap-3">
+          <a href="{% url 'claims_officer_detail' claim.claim_id %}" class="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">View claim</a>
+          <form method="post" action="{% url 'claims_officer_retry_payout' claim.claim_id %}">
+            {% csrf_token %}
+            <button type="submit" class="inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-blue-600 transition-colors">Retry payout</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="rounded-2xl bg-white p-8 text-center shadow-sm">
+    <p class="text-lg font-semibold text-gray-800">No payouts pending</p>
+    <p class="mt-1 text-sm text-gray-500">Every approved claim has been paid out. New entries will appear here if a B2C payout fails.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

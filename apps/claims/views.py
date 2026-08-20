@@ -270,20 +270,22 @@ def _reject_or_request_info(request, claim, event_type, new_status, default_mess
     return redirect('claims_officer_dashboard')
 
 
-# For beginners: This function '_approve_claim' performs one reusable task.
+# For beginners: This function '_attempt_claim_payout' performs one reusable task.
 # Other parts of the app call it to avoid duplicating logic.
-# For beginners: This function '_approve_claim' performs one reusable task.
+# For beginners: This function '_attempt_claim_payout' performs one reusable task.
 # Other parts of the app call it to avoid duplicating logic.
-def _approve_claim(request, claim):
-    claim.status = 'approved'
-    claim.reviewed_by = request.user
-    claim.decision_reason = claim.decision_reason or 'Approved by claims officer'
-    claim.decided_at = timezone.now()
-    claim.save(update_fields=['status', 'reviewed_by', 'decision_reason', 'decided_at'])
+def _attempt_claim_payout(claim):
+    """Attempt a B2C M-Pesa payout for an approved claim.
 
-    payout_reference = ''
-    payout_error = None
+    Shared by both the initial approve flow (_approve_claim) and the
+    claims-officer retry flow (claims_officer_retry_payout), so the
+    "call Daraja, update claim on success, queue the chain anchor"
+    logic only lives in one place.
 
+    Returns (success: bool, payout_reference: str, error: str | None).
+    Never raises — payout failures are reported back to the caller
+    instead, since a failed B2C call shouldn't take down the request.
+    """
     try:
         daraja = DarajaClient()
         response = daraja.b2c_payout(
@@ -313,8 +315,24 @@ def _approve_claim(request, claim):
         # tx hash rather than affecting the payout that already happened.
         queue_claim_anchor(claim.claim_id)
 
+        return True, payout_reference, None
+
     except Exception as exc:
-        payout_error = str(exc)
+        return False, '', str(exc)
+
+
+# For beginners: This function '_approve_claim' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function '_approve_claim' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+def _approve_claim(request, claim):
+    claim.status = 'approved'
+    claim.reviewed_by = request.user
+    claim.decision_reason = claim.decision_reason or 'Approved by claims officer'
+    claim.decided_at = timezone.now()
+    claim.save(update_fields=['status', 'reviewed_by', 'decision_reason', 'decided_at'])
+
+    success, payout_reference, payout_error = _attempt_claim_payout(claim)
 
     _write_audit_entry(
         request,
@@ -330,7 +348,8 @@ def _approve_claim(request, claim):
     if payout_error:
         messages.error(
             request,
-            f'Claim approved, but payout could not be completed: {payout_error}',
+            f'Claim approved, but payout could not be completed: {payout_error}. '
+            'You can retry it from the Pending Payouts page.',
         )
     else:
         messages.success(request, 'Claim approved and paid successfully.')
@@ -639,10 +658,12 @@ def claims_officer_dashboard_page(request):
         status__in=['submitted', 'under_review']
     ).select_related('user_id').order_by('-ai_flagged', '-submitted_at')
     kyc_queue_count = User.objects.filter(kyc_status='review').count()
+    pending_payouts_count = Claim.objects.filter(status='approved').count()
 
     return render(request, 'claims/officer_dashboard.html', {
         'claims': claims,
         'kyc_queue_count': kyc_queue_count,
+        'pending_payouts_count': pending_payouts_count,
     })
 
 
@@ -735,3 +756,69 @@ def claim_page(request):
         messages.success(request, 'Claim submitted successfully.')
         return redirect('claim')
     return render(request, 'claims/form.html', {'claims': claims})
+
+
+@login_required(login_url='login')
+# For beginners: This function 'claims_officer_payouts_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'claims_officer_payouts_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+def claims_officer_payouts_page(request):
+    """Approved-but-unpaid claims, i.e. claims where approval succeeded
+    but the B2C payout either failed or hasn't been attempted yet.
+    This is what the dashboard's 'Payments/B2C' card should actually
+    link to for a claims officer, instead of the customer STK-push page."""
+    guard = _claims_officer_guard(request)
+    if guard:
+        return guard
+
+    claims = Claim.objects.filter(
+        status='approved'
+    ).select_related('user_id').order_by('decided_at')
+
+    return render(request, 'claims/officer_payouts.html', {
+        'claims': claims,
+    })
+
+
+@login_required(login_url='login')
+# For beginners: This function 'claims_officer_retry_payout' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'claims_officer_retry_payout' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+def claims_officer_retry_payout(request, claim_id):
+    guard = _claims_officer_guard(request)
+    if guard:
+        return guard
+
+    if request.method != 'POST':
+        return redirect('claims_officer_payouts')
+
+    claim = get_object_or_404(Claim, claim_id=claim_id)
+
+    if claim.status != 'approved':
+        messages.error(
+            request,
+            'This claim is no longer pending payout (it may have already been paid).',
+        )
+        return redirect('claims_officer_payouts')
+
+    success, payout_reference, payout_error = _attempt_claim_payout(claim)
+
+    _write_audit_entry(
+        request,
+        claim,
+        'claim_payout_retried',
+        {
+            'status': claim.status,
+            'payout_reference': payout_reference,
+            'payout_error': payout_error,
+        },
+    )
+
+    if payout_error:
+        messages.error(request, f'Retry failed: {payout_error}')
+    else:
+        messages.success(request, 'Payout retried and completed successfully.')
+
+    return redirect('claims_officer_payouts')

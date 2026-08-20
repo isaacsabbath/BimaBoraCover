@@ -23,6 +23,7 @@ from apps.users.views import (
 from apps.plans.views import explore_page, select_plan_page, plan_detail_page
 from apps.claims.views import claim_page
 from apps.claims.views import claims_officer_dashboard_page, claim_detail_page
+from apps.claims.views import claims_officer_payouts_page, claims_officer_retry_payout
 from apps.payments.views import payment_page
 from apps.chamas.views import chama_page, chama_detail_page, chama_create_page, chama_invite_page
 
@@ -48,6 +49,8 @@ urlpatterns = [
     path('explore/select/<uuid:plan_id>/', select_plan_page, name='select_plan'),
     path('claim/', claim_page, name='claim'),
     path('claims/officer/', claims_officer_dashboard_page, name='claims_officer_dashboard'),
+    path('claims/officer/payouts/', claims_officer_payouts_page, name='claims_officer_payouts'),
+    path('claims/officer/payouts/<uuid:claim_id>/retry/', claims_officer_retry_payout, name='claims_officer_retry_payout'),
     path('claims/officer/<uuid:claim_id>/', claim_detail_page, name='claims_officer_detail'),
     path('claims-officer/queue/', claims_officer_queue_page, name='claims_officer_queue'),
     path('payment/', payment_page, name='payment'),
