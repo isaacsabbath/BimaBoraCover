@@ -35,6 +35,8 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from .models import User, KYCDocument
 from .services.kyc_analyzer import KYCAnalyzerService
 # from .services.azure_storage import AzureBlobStorageService  # Azure path kept for review
+from django_q.tasks import async_task
+
 from .services.mongo_storage import MongoAtlasStorageService
 from .serializers import (
     UserSerializer, UserDetailSerializer, RegisterSerializer,
