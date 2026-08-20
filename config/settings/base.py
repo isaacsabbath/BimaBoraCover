@@ -35,7 +35,7 @@ INSTALLED_APPS = [
     # Third-party
     'rest_framework',
     'corsheaders',
-    # 'django_q',  # TODO: Enable after setting up PostgreSQL for ORM broker
+    'django_q',  # Enabled for async blockchain anchoring (apps.audit.tasks). Requires PostgreSQL ORM broker; run `python manage.py migrate django_q`.
     
     # Local
     'apps.users',
@@ -183,6 +183,13 @@ Q_CLUSTER = {
 }
 
 # Safaricom Daraja Configuration
+# Blockchain Anchoring (Polygon Amoy testnet — BimaRegistry contract)
+# If any of these are unset, BlockchainAnchorService falls back to a
+# simulated tx hash instead of raising, so the app runs fine without them.
+POLYGON_AMOY_RPC_URL = config('POLYGON_AMOY_RPC_URL', default='https://rpc-amoy.polygon.technology')
+BIMA_BORA_REGISTRY_ADDRESS = config('BIMA_BORA_REGISTRY_ADDRESS', default='')
+OPERATOR_PRIVATE_KEY = config('OPERATOR_PRIVATE_KEY', default='')
+
 DARAJA_CONSUMER_KEY = config('DARAJA_CONSUMER_KEY', default='')
 DARAJA_CONSUMER_SECRET = config('DARAJA_CONSUMER_SECRET', default='')
 DARAJA_SHORTCODE = config('DARAJA_SHORTCODE', default='174379')

@@ -18,6 +18,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
+from apps.audit.tasks import queue_claim_anchor
 from django.db.models import Q
 import logging
 
@@ -306,6 +307,12 @@ def _approve_claim(request, claim):
         claim.paid_at = timezone.now()
         claim.save(update_fields=['status', 'payout_mpesa_ref', 'paid_at'])
 
+        # Anchor the payout proof on Polygon Amoy asynchronously — never
+        # block the claims officer on chain confirmation. If the anchor
+        # fails (RPC down, unfunded wallet), it falls back to a simulated
+        # tx hash rather than affecting the payout that already happened.
+        queue_claim_anchor(claim.claim_id)
+
     except Exception as exc:
         payout_error = str(exc)
 
@@ -442,6 +449,20 @@ class ClaimViewSet(viewsets.ModelViewSet):
         output = ClaimDetailSerializer(claim)
         return Response(output.data)
     
+    @action(detail=True, methods=['get'])
+    def verify_on_chain(self, request, claim_id=None):
+        """Free, read-only check against the BimaRegistry contract on
+        Polygon Amoy. Does not queue a task — verifyClaim() is a view
+        function on-chain, so it costs no gas and returns immediately."""
+        from apps.audit.services.blockchain_anchor import BlockchainAnchorService
+        claim = self.get_object()
+        result = BlockchainAnchorService().verify_claim(claim.claim_id)
+        return Response({
+            'claim_id': str(claim.claim_id),
+            'db_blockchain_tx': claim.blockchain_tx,
+            **result,
+        })
+
     @action(detail=False, methods=['get'])
     # For beginners: This function 'my_claims' performs one reusable task.
     # Other parts of the app call it to avoid duplicating logic.
@@ -596,6 +617,7 @@ class ClaimViewSet(viewsets.ModelViewSet):
                 claim.payout_mpesa_ref = response.get('ConversationID')
                 claim.paid_at = timezone.now()
                 claim.save()
+                queue_claim_anchor(claim.claim_id)
         except Exception as e:
             logger.exception(f"Payout error for claim {claim.claim_id}")
 

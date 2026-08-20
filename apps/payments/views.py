@@ -20,6 +20,7 @@ from django.http import JsonResponse
 from decimal import Decimal
 from django.db import transaction
 from apps.plans.models import Policy
+from apps.audit.tasks import queue_policy_anchor
 import datetime
 import json
 import logging
@@ -281,6 +282,12 @@ def mpesa_callback(request):
                             f"Policy activated for user "
                             f"{payment.user_id} — plan {payment.plan_id}"
                         )
+
+                        # Anchor on Polygon Amoy after the transaction commits —
+                        # queuing inside transaction.atomic() risks the async
+                        # worker picking up the task before this row is
+                        # actually visible in the database.
+                        transaction.on_commit(lambda pid=policy.policy_id: queue_policy_anchor(pid))
 
                 logger.info(f"Payment {payment.payment_id} confirmed")
 
