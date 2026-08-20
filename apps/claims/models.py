@@ -1,3 +1,7 @@
+# For beginners: This file (apps/claims/models.py) contains part of the application logic.
+# For beginners: Read this file from top to bottom to see what data it handles
+# and which functions/classes other files can call.
+
 """
 Models for claims management.
 """
@@ -9,9 +13,17 @@ from django.core.validators import MinValueValidator, MinLengthValidator
 from apps.users.models import User
 
 
+# For beginners: This class 'Claim' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'Claim' groups related data and behavior
+# so other parts of the app can use one structured object.
 class Claim(models.Model):
     """Insurance claim model."""
     
+    # For beginners: This class 'ClaimTypeChoices' groups related data and behavior
+    # so other parts of the app can use one structured object.
+    # For beginners: This class 'ClaimTypeChoices' groups related data and behavior
+    # so other parts of the app can use one structured object.
     class ClaimTypeChoices(models.TextChoices):
         MEDICAL = 'medical', 'Medical'
         ACCIDENT = 'accident', 'Accident'
@@ -19,6 +31,10 @@ class Claim(models.Model):
         PROPERTY = 'property', 'Property'
         INCOME_LOSS = 'income_loss', 'Income Loss'
     
+    # For beginners: This class 'StatusChoices' groups related data and behavior
+    # so other parts of the app can use one structured object.
+    # For beginners: This class 'StatusChoices' groups related data and behavior
+    # so other parts of the app can use one structured object.
     class StatusChoices(models.TextChoices):
         SUBMITTED = 'submitted', 'Submitted'
         UNDER_REVIEW = 'under_review', 'Under Review'
@@ -79,6 +95,10 @@ class Claim(models.Model):
     decided_at = models.DateTimeField(null=True, blank=True)
     paid_at = models.DateTimeField(null=True, blank=True)
     
+    # For beginners: This class 'Meta' groups related data and behavior
+    # so other parts of the app can use one structured object.
+    # For beginners: This class 'Meta' groups related data and behavior
+    # so other parts of the app can use one structured object.
     class Meta:
         db_table = 'claims_claim'
         ordering = ['-submitted_at']
@@ -88,10 +108,18 @@ class Claim(models.Model):
             models.Index(fields=['ai_flagged']),
         ]
     
+    # For beginners: This function '__str__' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function '__str__' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def __str__(self):
         return f"Claim {self.claim_id} - {self.user_id.full_name}"
 
 
+# For beginners: This class 'Notification' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'Notification' groups related data and behavior
+# so other parts of the app can use one structured object.
 class Notification(models.Model):
     """In-app notification for claim updates."""
 
@@ -101,6 +129,10 @@ class Notification(models.Model):
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # For beginners: This class 'Meta' groups related data and behavior
+    # so other parts of the app can use one structured object.
+    # For beginners: This class 'Meta' groups related data and behavior
+    # so other parts of the app can use one structured object.
     class Meta:
         db_table = 'claims_notification'
         ordering = ['-created_at']
@@ -109,5 +141,9 @@ class Notification(models.Model):
             models.Index(fields=['created_at']),
         ]
 
+    # For beginners: This function '__str__' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function '__str__' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def __str__(self):
         return f"Notification for {self.recipient.full_name}"

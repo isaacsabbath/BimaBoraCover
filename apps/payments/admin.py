@@ -1,8 +1,16 @@
+# For beginners: This file (apps/payments/admin.py) contains part of the application logic.
+# For beginners: Read this file from top to bottom to see what data it handles
+# and which functions/classes other files can call.
+
 from django.contrib import admin
 from .models import Payment
 
 
 @admin.register(Payment)
+# For beginners: This class 'PaymentAdmin' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'PaymentAdmin' groups related data and behavior
+# so other parts of the app can use one structured object.
 class PaymentAdmin(admin.ModelAdmin):
     list_display = ('payment_id', 'user_id', 'amount', 'payment_type', 'payment_direction', 'status', 'mpesa_ref', 'initiated_at')
     list_filter = ('payment_type', 'payment_direction', 'status')

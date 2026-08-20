@@ -1,3 +1,7 @@
+# For beginners: This file (web/views.py) contains part of the application logic.
+# For beginners: Read this file from top to bottom to see what data it handles
+# and which functions/classes other files can call.
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -16,6 +20,10 @@ from apps.chamas.models import Chama, ChamaMember
 
 # ─── Auth ────────────────────────────────────────────────────────────────────
 
+# For beginners: This function 'login_view' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'login_view' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def login_view(request):
     if request.user.is_authenticated:
         return redirect('web:home')
@@ -31,6 +39,10 @@ def login_view(request):
     return render(request, 'web/login.html', {})
 
 
+# For beginners: This function 'register_view' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'register_view' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def register_view(request):
     if request.user.is_authenticated:
         return redirect('web:home')
@@ -61,6 +73,10 @@ def register_view(request):
     return render(request, 'web/register.html', {})
 
 
+# For beginners: This function 'logout_view' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'logout_view' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def logout_view(request):
     logout(request)
     return redirect('web:login')
@@ -69,6 +85,10 @@ def logout_view(request):
 # ─── Home ─────────────────────────────────────────────────────────────────────
 
 @login_required(login_url='web:login')
+# For beginners: This function 'home_view' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'home_view' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def home_view(request):
     active_policy = Policy.objects.filter(user_id=request.user, status='active').select_related('plan_id').first()
     recent_claims = Claim.objects.filter(user_id=request.user).order_by('-submitted_at')[:3]
@@ -81,6 +101,10 @@ def home_view(request):
 # ─── Explore ──────────────────────────────────────────────────────────────────
 
 @login_required(login_url='web:login')
+# For beginners: This function 'explore_view' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'explore_view' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def explore_view(request):
     plan_types = [
         {'key': 'individual', 'label': 'Individual'},
@@ -99,6 +123,10 @@ def explore_view(request):
 
 @login_required(login_url='web:login')
 @require_POST
+# For beginners: This function 'select_plan_view' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'select_plan_view' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def select_plan_view(request, plan_id):
     plan = get_object_or_404(InsurancePlan, plan_id=plan_id, status='active')
     messages.success(request, f'You selected {plan.plan_name}. Complete payment to activate.')
@@ -108,6 +136,10 @@ def select_plan_view(request, plan_id):
 # ─── Claims ───────────────────────────────────────────────────────────────────
 
 @login_required(login_url='web:login')
+# For beginners: This function 'claim_view' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'claim_view' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def claim_view(request):
     claims = Claim.objects.filter(user_id=request.user).order_by('-submitted_at')
     if request.method == 'POST':
@@ -139,6 +171,10 @@ def claim_view(request):
 # ─── Payment ──────────────────────────────────────────────────────────────────
 
 @login_required(login_url='web:login')
+# For beginners: This function 'payment_view' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'payment_view' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def payment_view(request):
     plans = InsurancePlan.objects.filter(status='active')
     active_policy = Policy.objects.filter(user_id=request.user, status='active').select_related('plan_id').first()
@@ -231,6 +267,10 @@ def payment_view(request):
 # ─── Chama ────────────────────────────────────────────────────────────────────
 
 @login_required(login_url='web:login')
+# For beginners: This function 'chama_view' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'chama_view' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def chama_view(request):
     chama_ids = ChamaMember.objects.filter(user_id=request.user, status='active').values_list('chama_id', flat=True)
     chamas = Chama.objects.filter(chama_id__in=chama_ids).prefetch_related('members')
@@ -238,6 +278,10 @@ def chama_view(request):
 
 
 @login_required(login_url='web:login')
+# For beginners: This function 'chama_detail_view' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'chama_detail_view' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def chama_detail_view(request, chama_id):
     chama = get_object_or_404(Chama, chama_id=chama_id)
     members = ChamaMember.objects.filter(chama_id=chama, status='active').select_related('user_id')
@@ -246,6 +290,10 @@ def chama_detail_view(request, chama_id):
 
 @login_required(login_url='web:login')
 @require_POST
+# For beginners: This function 'chama_create_view' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'chama_create_view' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def chama_create_view(request):
     d = request.POST
     chama = Chama.objects.create(
@@ -262,6 +310,10 @@ def chama_create_view(request):
 
 @login_required(login_url='web:login')
 @require_POST
+# For beginners: This function 'chama_invite_view' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'chama_invite_view' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def chama_invite_view(request):
     chama_id = request.POST.get('chama_id')
     email = request.POST.get('email')
@@ -278,6 +330,10 @@ def chama_invite_view(request):
 # ─── Profile ──────────────────────────────────────────────────────────────────
 
 @login_required(login_url='web:login')
+# For beginners: This function 'profile_view' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'profile_view' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def profile_view(request):
     if request.method == 'POST':
         user = request.user
@@ -290,6 +346,10 @@ def profile_view(request):
 
 
 @login_required(login_url='web:login')
+# For beginners: This function 'change_password_view' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'change_password_view' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def change_password_view(request):
     if request.method == 'POST':
         old = request.POST.get('old_password')

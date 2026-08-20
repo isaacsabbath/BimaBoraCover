@@ -1,3 +1,7 @@
+# For beginners: This file (apps/chamas/views.py) contains part of the application logic.
+# For beginners: Read this file from top to bottom to see what data it handles
+# and which functions/classes other files can call.
+
 """
 Views for Chama (group) management endpoints.
 """
@@ -18,12 +22,20 @@ from apps.chamas.serializers import (
 )
 
 
+# For beginners: This class 'ChamaViewSet' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'ChamaViewSet' groups related data and behavior
+# so other parts of the app can use one structured object.
 class ChamaViewSet(viewsets.ModelViewSet):
     """ViewSet for Chama CRUD operations and invitations."""
     
     permission_classes = [IsAuthenticated]
     lookup_field = 'chama_id'
     
+    # For beginners: This function 'get_serializer_class' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'get_serializer_class' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def get_serializer_class(self):
         """Return appropriate serializer based on action."""
         if self.action == 'list':
@@ -33,6 +45,10 @@ class ChamaViewSet(viewsets.ModelViewSet):
         else:
             return ChamaDetailSerializer
     
+    # For beginners: This function 'get_queryset' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'get_queryset' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def get_queryset(self):
         """Return Chamas the user is member of."""
         from apps.users.models import User
@@ -43,6 +59,10 @@ class ChamaViewSet(viewsets.ModelViewSet):
         ).values_list('chama_id', flat=True)
         return Chama.objects.filter(chama_id__in=chama_ids).order_by('-created_at')
     
+    # For beginners: This function 'create' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'create' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def create(self, request, *args, **kwargs):
         """Create a new Chama (current user becomes admin)."""
         serializer = self.get_serializer(data=request.data, context={'request': request})
@@ -50,6 +70,10 @@ class ChamaViewSet(viewsets.ModelViewSet):
         self.perform_create(serializer)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     
+    # For beginners: This function 'perform_update' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'perform_update' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def perform_update(self, serializer):
         """Ensure only admin can update chama."""
         chama_id = self.kwargs.get('chama_id')
@@ -60,6 +84,10 @@ class ChamaViewSet(viewsets.ModelViewSet):
         serializer.save()
     
     @action(detail=True, methods=['post'], url_path='invite')
+    # For beginners: This function 'send_invite' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'send_invite' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def send_invite(self, request, chama_id=None):
         """Send invitation to a new member (admin only)."""
         chama = self.get_object()
@@ -114,6 +142,10 @@ class ChamaViewSet(viewsets.ModelViewSet):
         }, status=status.HTTP_201_CREATED)
     
     @action(detail=False, methods=['post'], url_path='join/(?P<token>[^/.]+)')
+    # For beginners: This function 'join_via_token' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'join_via_token' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def join_via_token(self, request, token=None):
         """Accept invitation and join Chama."""
         # Get invite from cache
@@ -151,6 +183,10 @@ class ChamaViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
     
     @action(detail=True, methods=['delete'], url_path='members/(?P<user_id>[^/.]+)')
+    # For beginners: This function 'remove_member' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'remove_member' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def remove_member(self, request, chama_id=None, user_id=None):
         """Remove member from Chama (admin only)."""
         chama = self.get_object()
@@ -196,6 +232,10 @@ class ChamaViewSet(viewsets.ModelViewSet):
 # ─── Template Views ───────────────────────────────────────────────────────────
 
 @login_required(login_url='login')
+# For beginners: This function 'chama_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'chama_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def chama_page(request):
     chama_ids = ChamaMember.objects.filter(user_id=request.user, status='active').values_list('chama_id', flat=True)
     chamas = Chama.objects.filter(chama_id__in=chama_ids).prefetch_related('members')
@@ -203,6 +243,10 @@ def chama_page(request):
 
 
 @login_required(login_url='login')
+# For beginners: This function 'chama_detail_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'chama_detail_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def chama_detail_page(request, chama_id):
     chama = get_object_or_404(Chama, chama_id=chama_id)
     members = ChamaMember.objects.filter(chama_id=chama, status='active').select_related('user_id')
@@ -211,6 +255,10 @@ def chama_detail_page(request, chama_id):
 
 @login_required(login_url='login')
 @require_POST
+# For beginners: This function 'chama_create_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'chama_create_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def chama_create_page(request):
     chama = Chama.objects.create(
         group_name=request.POST['group_name'],
@@ -225,6 +273,10 @@ def chama_create_page(request):
 
 @login_required(login_url='login')
 @require_POST
+# For beginners: This function 'chama_invite_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'chama_invite_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def chama_invite_page(request):
     from apps.users.models import User
     chama = get_object_or_404(Chama, chama_id=request.POST.get('chama_id'), admin_id=request.user)

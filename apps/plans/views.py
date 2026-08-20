@@ -1,3 +1,7 @@
+# For beginners: This file (apps/plans/views.py) contains part of the application logic.
+# For beginners: Read this file from top to bottom to see what data it handles
+# and which functions/classes other files can call.
+
 """
 Views for Insurance Plans browsing and premium calculation.
 """
@@ -21,6 +25,10 @@ from apps.users.permissions import IsSuperAdmin
 from apps.plans.services.premium_calculator import calculate_premium, calculate_group_discount
 
 
+# For beginners: This class 'InsurancePlanViewSet' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'InsurancePlanViewSet' groups related data and behavior
+# so other parts of the app can use one structured object.
 class InsurancePlanViewSet(viewsets.ModelViewSet):
     """ViewSet for browsing and managing insurance plans."""
     
@@ -28,6 +36,10 @@ class InsurancePlanViewSet(viewsets.ModelViewSet):
     lookup_field = 'plan_id'
     ordering = ['-created_at']
     
+    # For beginners: This function 'get_serializer_class' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'get_serializer_class' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def get_serializer_class(self):
         """Return appropriate serializer based on action."""
         if self.action == 'list':
@@ -39,18 +51,30 @@ class InsurancePlanViewSet(viewsets.ModelViewSet):
         else:
             return InsurancePlanDetailSerializer
     
+    # For beginners: This function 'get_queryset' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'get_queryset' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def get_queryset(self):
         """Return active plans (or all for admin)."""
         if self.request.user.role == 'super_admin':
             return InsurancePlan.objects.all().order_by('-created_at')
         return InsurancePlan.objects.filter(status='active').order_by('-created_at')
     
+    # For beginners: This function 'get_permissions' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'get_permissions' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def get_permissions(self):
         """Admin actions require IsSuperAdmin."""
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
             self.permission_classes = [IsSuperAdmin]
         return super().get_permissions()
     
+    # For beginners: This function 'create' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'create' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def create(self, request, *args, **kwargs):
         """Create new plan (super_admin only)."""
         serializer = self.get_serializer(data=request.data, context={'request': request})
@@ -59,6 +83,10 @@ class InsurancePlanViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     
     @action(detail=True, methods=['post'])
+    # For beginners: This function 'calculate_premium' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'calculate_premium' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def calculate_premium(self, request, plan_id=None):
         """Calculate premium for given plan and parameters."""
         plan = self.get_object()
@@ -98,6 +126,10 @@ class InsurancePlanViewSet(viewsets.ModelViewSet):
             )
     
     @action(detail=False, methods=['get'])
+    # For beginners: This function 'by_type' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'by_type' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def by_type(self, request):
         """Get plans filtered by type."""
         plan_type = request.query_params.get('type')
@@ -112,6 +144,10 @@ class InsurancePlanViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
     
     @action(detail=False, methods=['get'])
+    # For beginners: This function 'by_category' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'by_category' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def by_category(self, request):
         """Get plans filtered by coverage category."""
         category = request.query_params.get('category')
@@ -126,6 +162,10 @@ class InsurancePlanViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
+# For beginners: This class 'PolicyViewSet' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'PolicyViewSet' groups related data and behavior
+# so other parts of the app can use one structured object.
 class PolicyViewSet(viewsets.ReadOnlyModelViewSet):
     """ViewSet for viewing policies (read-only; creation via payments)."""
     
@@ -134,11 +174,19 @@ class PolicyViewSet(viewsets.ReadOnlyModelViewSet):
     lookup_field = 'policy_id'
     ordering = ['-created_at']
     
+    # For beginners: This function 'get_queryset' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'get_queryset' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def get_queryset(self):
         """Return user's policies."""
         return Policy.objects.filter(user_id=self.request.user).order_by('-created_at')
     
     @action(detail=False, methods=['get'])
+    # For beginners: This function 'active' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'active' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def active(self, request):
         """Get user's active policies."""
         from django.utils import timezone
@@ -153,6 +201,10 @@ class PolicyViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(serializer.data)
     
     @action(detail=False, methods=['get'])
+    # For beginners: This function 'history' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'history' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def history(self, request):
         """Get user's policy history (all statuses)."""
         policies = self.get_queryset()
@@ -163,6 +215,10 @@ class PolicyViewSet(viewsets.ReadOnlyModelViewSet):
 # ─── Template Views ───────────────────────────────────────────────────────────
 
 @login_required(login_url='login')
+# For beginners: This function 'explore_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'explore_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def explore_page(request):
     plan_types = [
         {'key': 'individual', 'label': 'Individual'},
@@ -180,12 +236,20 @@ def explore_page(request):
 
 
 @login_required(login_url='login')
+# For beginners: This function 'plan_detail_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'plan_detail_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def plan_detail_page(request, plan_id):
     plan = get_object_or_404(InsurancePlan, plan_id=plan_id, status='active')
     return render(request, 'plans/detail.html', {'plan': plan})
 
 
 @login_required(login_url='login')
+# For beginners: This function 'select_plan_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'select_plan_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def select_plan_page(request, plan_id):
     plan = get_object_or_404(InsurancePlan, plan_id=plan_id)
     messages.success(request, f'You selected {plan.plan_name}. Complete payment to activate.')

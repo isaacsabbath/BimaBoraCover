@@ -1,3 +1,7 @@
+# For beginners: This file (apps/chamas/admin.py) contains part of the application logic.
+# For beginners: Read this file from top to bottom to see what data it handles
+# and which functions/classes other files can call.
+
 """
 Django admin configuration for chamas app.
 """
@@ -7,6 +11,10 @@ from .models import Chama, ChamaMember
 
 
 @admin.register(Chama)
+# For beginners: This class 'ChamaAdmin' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'ChamaAdmin' groups related data and behavior
+# so other parts of the app can use one structured object.
 class ChamaAdmin(admin.ModelAdmin):
     """Admin for Chama model."""
     
@@ -18,6 +26,10 @@ class ChamaAdmin(admin.ModelAdmin):
 
 
 @admin.register(ChamaMember)
+# For beginners: This class 'ChamaMemberAdmin' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'ChamaMemberAdmin' groups related data and behavior
+# so other parts of the app can use one structured object.
 class ChamaMemberAdmin(admin.ModelAdmin):
     """Admin for ChamaMember model."""
     

@@ -1,3 +1,7 @@
+# For beginners: This file (apps/plans/models.py) contains part of the application logic.
+# For beginners: Read this file from top to bottom to see what data it handles
+# and which functions/classes other files can call.
+
 """
 Models for insurance plans and policies.
 """
@@ -9,14 +13,26 @@ from django.core.validators import MinValueValidator
 from apps.users.models import User
 
 
+# For beginners: This class 'InsurancePlan' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'InsurancePlan' groups related data and behavior
+# so other parts of the app can use one structured object.
 class InsurancePlan(models.Model):
     """Insurance plan catalogue."""
     
+    # For beginners: This class 'PlanTypeChoices' groups related data and behavior
+    # so other parts of the app can use one structured object.
+    # For beginners: This class 'PlanTypeChoices' groups related data and behavior
+    # so other parts of the app can use one structured object.
     class PlanTypeChoices(models.TextChoices):
         INDIVIDUAL = 'individual', 'Individual'
         FAMILY = 'family', 'Family'
         GROUP = 'group', 'Group'
     
+    # For beginners: This class 'CoverageCategoryChoices' groups related data and behavior
+    # so other parts of the app can use one structured object.
+    # For beginners: This class 'CoverageCategoryChoices' groups related data and behavior
+    # so other parts of the app can use one structured object.
     class CoverageCategoryChoices(models.TextChoices):
         HEALTH = 'health', 'Health'
         LIFE = 'life', 'Life'
@@ -24,12 +40,20 @@ class InsurancePlan(models.Model):
         PROPERTY = 'property', 'Property'
         INCOME_PROTECTION = 'income_protection', 'Income Protection'
     
+    # For beginners: This class 'PaymentFrequencyChoices' groups related data and behavior
+    # so other parts of the app can use one structured object.
+    # For beginners: This class 'PaymentFrequencyChoices' groups related data and behavior
+    # so other parts of the app can use one structured object.
     class PaymentFrequencyChoices(models.TextChoices):
         DAILY = 'daily', 'Daily'
         WEEKLY = 'weekly', 'Weekly'
         MONTHLY = 'monthly', 'Monthly'
         ANNUAL = 'annual', 'Annual'
     
+    # For beginners: This class 'StatusChoices' groups related data and behavior
+    # so other parts of the app can use one structured object.
+    # For beginners: This class 'StatusChoices' groups related data and behavior
+    # so other parts of the app can use one structured object.
     class StatusChoices(models.TextChoices):
         ACTIVE = 'active', 'Active'
         INACTIVE = 'inactive', 'Inactive'
@@ -72,6 +96,10 @@ class InsurancePlan(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
+    # For beginners: This class 'Meta' groups related data and behavior
+    # so other parts of the app can use one structured object.
+    # For beginners: This class 'Meta' groups related data and behavior
+    # so other parts of the app can use one structured object.
     class Meta:
         db_table = 'plans_insuranceplan'
         ordering = ['-created_at']
@@ -80,13 +108,25 @@ class InsurancePlan(models.Model):
             models.Index(fields=['coverage_category']),
         ]
     
+    # For beginners: This function '__str__' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function '__str__' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def __str__(self):
         return f"{self.plan_name} - {self.get_coverage_category_display()}"
 
 
+# For beginners: This class 'Policy' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'Policy' groups related data and behavior
+# so other parts of the app can use one structured object.
 class Policy(models.Model):
     """Active insurance policy for a user."""
     
+    # For beginners: This class 'StatusChoices' groups related data and behavior
+    # so other parts of the app can use one structured object.
+    # For beginners: This class 'StatusChoices' groups related data and behavior
+    # so other parts of the app can use one structured object.
     class StatusChoices(models.TextChoices):
         ACTIVE = 'active', 'Active'
         EXPIRED = 'expired', 'Expired'
@@ -125,6 +165,10 @@ class Policy(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
+    # For beginners: This class 'Meta' groups related data and behavior
+    # so other parts of the app can use one structured object.
+    # For beginners: This class 'Meta' groups related data and behavior
+    # so other parts of the app can use one structured object.
     class Meta:
         db_table = 'plans_policy'
         ordering = ['-created_at']
@@ -133,5 +177,9 @@ class Policy(models.Model):
             models.Index(fields=['status']),
         ]
     
+    # For beginners: This function '__str__' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function '__str__' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def __str__(self):
         return f"Policy {self.policy_id} - {self.user_id.full_name}"

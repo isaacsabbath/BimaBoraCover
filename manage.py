@@ -1,9 +1,17 @@
 #!/usr/bin/env python
+# For beginners: This file (manage.py) contains part of the application logic.
+# For beginners: Read this file from top to bottom to see what data it handles
+# and which functions/classes other files can call.
+
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
 
 
+# For beginners: This function 'main' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'main' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def main():
     """Run administrative tasks."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.local')

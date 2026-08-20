@@ -1,3 +1,7 @@
+# For beginners: This file (apps/plans/services/premium_calculator.py) contains part of the application logic.
+# For beginners: Read this file from top to bottom to see what data it handles
+# and which functions/classes other files can call.
+
 """
 Premium calculator service for insurance plans.
 
@@ -7,6 +11,10 @@ Pure function implementation - fully unit-testable with no external dependencies
 from decimal import Decimal
 
 
+# For beginners: This function 'calculate_premium' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'calculate_premium' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def calculate_premium(base_rate, coverage_amount, duration_days,
                       group_size=1, payment_frequency='monthly'):
     """
@@ -89,6 +97,10 @@ def calculate_premium(base_rate, coverage_amount, duration_days,
     return round(total_premium, 2)
 
 
+# For beginners: This function 'calculate_group_discount' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'calculate_group_discount' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def calculate_group_discount(base_premium, group_size):
     """
     Calculate group discount (10% for 5+ members, 5% for 3-4 members).

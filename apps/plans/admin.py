@@ -1,8 +1,16 @@
+# For beginners: This file (apps/plans/admin.py) contains part of the application logic.
+# For beginners: Read this file from top to bottom to see what data it handles
+# and which functions/classes other files can call.
+
 from django.contrib import admin
 from .models import InsurancePlan, Policy
 
 
 @admin.register(InsurancePlan)
+# For beginners: This class 'InsurancePlanAdmin' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'InsurancePlanAdmin' groups related data and behavior
+# so other parts of the app can use one structured object.
 class InsurancePlanAdmin(admin.ModelAdmin):
     list_display = ('plan_name', 'coverage_category', 'plan_type', 'status', 'base_rate', 'created_at')
     list_filter = ('coverage_category', 'plan_type', 'status')
@@ -10,11 +18,19 @@ class InsurancePlanAdmin(admin.ModelAdmin):
     ordering = ('-created_at',)
     readonly_fields = ('plan_id', 'created_at')
 
+    # For beginners: This function 'save_model' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'save_model' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def save_model(self, request, obj, form, change):
         if not obj.pk:
             obj.created_by = request.user
         super().save_model(request, obj, form, change)
 
+    # For beginners: This function 'get_fields' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'get_fields' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def get_fields(self, request, obj=None):
         fields = [
             'plan_name', 'plan_type', 'coverage_category',
@@ -27,6 +43,10 @@ class InsurancePlanAdmin(admin.ModelAdmin):
 
 
 @admin.register(Policy)
+# For beginners: This class 'PolicyAdmin' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'PolicyAdmin' groups related data and behavior
+# so other parts of the app can use one structured object.
 class PolicyAdmin(admin.ModelAdmin):
     list_display = ('policy_id', 'user_id', 'plan_id', 'coverage_amount', 'status', 'start_date')
     list_filter = ('status',)

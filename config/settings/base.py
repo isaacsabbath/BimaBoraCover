@@ -1,3 +1,7 @@
+# For beginners: This file (config/settings/base.py) contains part of the application logic.
+# For beginners: Read this file from top to bottom to see what data it handles
+# and which functions/classes other files can call.
+
 """
 Django settings for Bima Afya project.
 Base settings shared between local and production environments.
@@ -190,36 +194,46 @@ AT_API_KEY = config('AT_API_KEY', default='')
 AT_USERNAME = config('AT_USERNAME', default='sandbox')
 AT_SENDER_ID = config('AT_SENDER_ID', default='BimaAfya')
 
-# Azure Blob Storage Configuration
-AZURE_ACCOUNT_NAME = config('AZURE_ACCOUNT_NAME', default='')
-AZURE_ACCOUNT_KEY = config('AZURE_ACCOUNT_KEY', default='')
-AZURE_CONTAINER = config('AZURE_CONTAINER', default='bima-afya-documents')
+# Azure Blob Storage Configuration (commented for migration review)
+# AZURE_ACCOUNT_NAME = config('AZURE_ACCOUNT_NAME', default='')
+# AZURE_ACCOUNT_KEY = config('AZURE_ACCOUNT_KEY', default='')
+# AZURE_CONTAINER = config('AZURE_CONTAINER', default='bima-afya-documents')
+#
+# USE_AZURE_STORAGE = AZURE_ACCOUNT_NAME and AZURE_ACCOUNT_KEY
+#
+# if USE_AZURE_STORAGE:
+#     STORAGES = {
+#         'default': {
+#             'BACKEND': 'storages.backends.azure_storage.AzureStorage',
+#             'OPTIONS': {
+#                 'account_name': AZURE_ACCOUNT_NAME,
+#                 'account_key': AZURE_ACCOUNT_KEY,
+#                 'azure_container': AZURE_CONTAINER,
+#             }
+#         },
+#         'staticfiles': {
+#             'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+#         }
+#     }
+# else:
+#     STORAGES = {
+#         'default': {
+#             'BACKEND': 'django.core.files.storage.FileSystemStorage',
+#         },
+#         'staticfiles': {
+#             'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+#         }
+#     }
 
-USE_AZURE_STORAGE = AZURE_ACCOUNT_NAME and AZURE_ACCOUNT_KEY
-
-if USE_AZURE_STORAGE:
-    STORAGES = {
-        'default': {
-            'BACKEND': 'storages.backends.azure_storage.AzureStorage',
-            'OPTIONS': {
-                'account_name': AZURE_ACCOUNT_NAME,
-                'account_key': AZURE_ACCOUNT_KEY,
-                'azure_container': AZURE_CONTAINER,   # ← fixed: was azure_container_name
-            }
-        },
-        'staticfiles': {
-            'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
-        }
+# Current storage backend: local static files + app-managed Mongo Atlas GridFS service.
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
     }
-else:
-    STORAGES = {
-        'default': {
-            'BACKEND': 'django.core.files.storage.FileSystemStorage',
-        },
-        'staticfiles': {
-            'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
-        }
-    }
+}
 # Email Configuration
 EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
 EMAIL_HOST = config('EMAIL_HOST', default='localhost')

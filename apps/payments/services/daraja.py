@@ -1,3 +1,7 @@
+# For beginners: This file (apps/payments/services/daraja.py) contains part of the application logic.
+# For beginners: Read this file from top to bottom to see what data it handles
+# and which functions/classes other files can call.
+
 """
 Daraja M-Pesa API integration wrapper.
 """
@@ -9,11 +13,19 @@ from django.conf import settings
 from django.utils import timezone
 
 
+# For beginners: This class 'DarajaClient' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'DarajaClient' groups related data and behavior
+# so other parts of the app can use one structured object.
 class DarajaClient:
     """Wrapper for Safaricom Daraja M-Pesa API."""
     
     BASE_URL = "https://sandbox.safaricom.co.ke" if settings.DEBUG else "https://api.safaricom.co.ke"
     
+    # For beginners: This function '__init__' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function '__init__' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def __init__(self):
         self.consumer_key = settings.DARAJA_CONSUMER_KEY
         self.consumer_secret = settings.DARAJA_CONSUMER_SECRET
@@ -22,6 +34,10 @@ class DarajaClient:
         self.access_token = None
         self.token_expires_at = None
 
+    # For beginners: This function '_validate_stk_push_config' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function '_validate_stk_push_config' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def _validate_stk_push_config(self):
         """Validate STK Push settings before calling Daraja."""
         callback_url = getattr(settings, 'DARAJA_CALLBACK_URL', '').strip()
@@ -35,6 +51,10 @@ class DarajaClient:
             raise ValueError('DARAJA_CALLBACK_URL must use HTTPS')
         return callback_url
     
+    # For beginners: This function 'get_access_token' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'get_access_token' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def get_access_token(self):
         """Get OAuth 2.0 access token from Daraja."""
         if self.access_token and self.token_expires_at and timezone.now() < self.token_expires_at:
@@ -60,6 +80,10 @@ class DarajaClient:
         except requests.exceptions.RequestException as e:
             raise ValueError(f"Failed to get access token: {str(e)}")
     
+    # For beginners: This function 'stk_push' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'stk_push' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def stk_push(self, phone_number, amount, reference, description):
         """
         Initiate STK push payment request (C2B).
@@ -119,6 +143,10 @@ class DarajaClient:
         except requests.exceptions.RequestException as e:
             raise ValueError(f"STK push failed: {str(e)}")
     
+    # For beginners: This function 'check_transaction_status' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'check_transaction_status' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def check_transaction_status(self, checkout_request_id):
         """Query transaction status using CheckoutRequestID."""
         token = self.get_access_token()
@@ -150,6 +178,10 @@ class DarajaClient:
         except requests.exceptions.RequestException as e:
             raise ValueError(f"Status check failed: {str(e)}")
     
+    # For beginners: This function 'b2c_payout' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'b2c_payout' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def b2c_payout(self, phone_number, amount, reference, description):
         """
         Send money to customer (B2C - Business to Customer).

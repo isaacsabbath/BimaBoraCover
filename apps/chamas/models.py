@@ -1,3 +1,7 @@
+# For beginners: This file (apps/chamas/models.py) contains part of the application logic.
+# For beginners: Read this file from top to bottom to see what data it handles
+# and which functions/classes other files can call.
+
 """
 Models for Chama (savings group) management.
 """
@@ -8,9 +12,17 @@ from django.core.validators import MinValueValidator
 from apps.users.models import User
 
 
+# For beginners: This class 'Chama' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'Chama' groups related data and behavior
+# so other parts of the app can use one structured object.
 class Chama(models.Model):
     """Chama (savings group) model."""
     
+    # For beginners: This class 'StatusChoices' groups related data and behavior
+    # so other parts of the app can use one structured object.
+    # For beginners: This class 'StatusChoices' groups related data and behavior
+    # so other parts of the app can use one structured object.
     class StatusChoices(models.TextChoices):
         ACTIVE = 'active', 'Active'
         SUSPENDED = 'suspended', 'Suspended'
@@ -33,6 +45,10 @@ class Chama(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
+    # For beginners: This class 'Meta' groups related data and behavior
+    # so other parts of the app can use one structured object.
+    # For beginners: This class 'Meta' groups related data and behavior
+    # so other parts of the app can use one structured object.
     class Meta:
         db_table = 'chamas_chama'
         ordering = ['-created_at']
@@ -41,17 +57,33 @@ class Chama(models.Model):
             models.Index(fields=['admin_id']),
         ]
     
+    # For beginners: This function '__str__' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function '__str__' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def __str__(self):
         return f"{self.group_name} ({self.registration_no})"
 
 
+# For beginners: This class 'ChamaMember' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'ChamaMember' groups related data and behavior
+# so other parts of the app can use one structured object.
 class ChamaMember(models.Model):
     """Junction table for Chama membership."""
     
+    # For beginners: This class 'MemberRoleChoices' groups related data and behavior
+    # so other parts of the app can use one structured object.
+    # For beginners: This class 'MemberRoleChoices' groups related data and behavior
+    # so other parts of the app can use one structured object.
     class MemberRoleChoices(models.TextChoices):
         ADMIN = 'admin', 'Admin'
         MEMBER = 'member', 'Member'
     
+    # For beginners: This class 'StatusChoices' groups related data and behavior
+    # so other parts of the app can use one structured object.
+    # For beginners: This class 'StatusChoices' groups related data and behavior
+    # so other parts of the app can use one structured object.
     class StatusChoices(models.TextChoices):
         ACTIVE = 'active', 'Active'
         LEFT = 'left', 'Left'
@@ -71,6 +103,10 @@ class ChamaMember(models.Model):
         default=StatusChoices.ACTIVE
     )
     
+    # For beginners: This class 'Meta' groups related data and behavior
+    # so other parts of the app can use one structured object.
+    # For beginners: This class 'Meta' groups related data and behavior
+    # so other parts of the app can use one structured object.
     class Meta:
         db_table = 'chamas_chamember'
         unique_together = [('chama_id', 'user_id')]
@@ -80,5 +116,9 @@ class ChamaMember(models.Model):
             models.Index(fields=['user_id']),
         ]
     
+    # For beginners: This function '__str__' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function '__str__' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def __str__(self):
         return f"{self.user_id.full_name} - {self.chama_id.group_name}"

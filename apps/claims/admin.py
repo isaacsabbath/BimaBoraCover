@@ -1,9 +1,17 @@
+# For beginners: This file (apps/claims/admin.py) contains part of the application logic.
+# For beginners: Read this file from top to bottom to see what data it handles
+# and which functions/classes other files can call.
+
 from django.contrib import admin
 from django.utils import timezone
 from .models import Claim, Notification
 
 
 @admin.register(Claim)
+# For beginners: This class 'ClaimAdmin' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'ClaimAdmin' groups related data and behavior
+# so other parts of the app can use one structured object.
 class ClaimAdmin(admin.ModelAdmin):
     list_display = ('claim_id', 'user_id', 'claim_type', 'claim_amount', 'status', 'ai_flagged', 'submitted_at')
     list_filter = ('claim_type', 'status', 'ai_flagged')
@@ -33,6 +41,10 @@ class ClaimAdmin(admin.ModelAdmin):
         }),
     )
 
+    # For beginners: This function 'approve_claims' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'approve_claims' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def approve_claims(self, request, queryset):
         queryset.update(
             status='approved',
@@ -42,6 +54,10 @@ class ClaimAdmin(admin.ModelAdmin):
         self.message_user(request, f"{queryset.count()} claim(s) approved.")
     approve_claims.short_description = "Approve selected claims"
 
+    # For beginners: This function 'reject_claims' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'reject_claims' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def reject_claims(self, request, queryset):
         queryset.update(
             status='rejected',
@@ -53,6 +69,10 @@ class ClaimAdmin(admin.ModelAdmin):
 
 
 @admin.register(Notification)
+# For beginners: This class 'NotificationAdmin' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'NotificationAdmin' groups related data and behavior
+# so other parts of the app can use one structured object.
 class NotificationAdmin(admin.ModelAdmin):
     list_display = ('recipient', 'message', 'is_read', 'created_at')
     list_filter = ('is_read', 'created_at')

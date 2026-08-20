@@ -1,3 +1,7 @@
+# For beginners: This file (apps/claims/views.py) contains part of the application logic.
+# For beginners: Read this file from top to bottom to see what data it handles
+# and which functions/classes other files can call.
+
 """
 Views for Insurance Claims workflow.
 """
@@ -26,11 +30,16 @@ from apps.claims.serializers import (
 )
 from apps.payments.services.daraja import DarajaClient
 from apps.claims.services.invoice_analyzer import InvoiceAnalyzerService
-from apps.users.services.azure_storage import AzureBlobStorageService
+# from apps.users.services.azure_storage import AzureBlobStorageService  # Azure path kept for review
+from apps.users.services.mongo_storage import MongoAtlasStorageService
 
 logger = logging.getLogger(__name__)
 
 
+# For beginners: This function '_claims_officer_guard' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function '_claims_officer_guard' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def _claims_officer_guard(request):
     if not request.user.is_authenticated or request.user.role != 'claims_officer':
         messages.error(request, 'Only claims officers can access this page.')
@@ -38,6 +47,10 @@ def _claims_officer_guard(request):
     return None
 
 
+# For beginners: This function '_write_audit_entry' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function '_write_audit_entry' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def _write_audit_entry(request, claim, event_type, metadata=None):
     AuditLog.objects.create(
         event_type=event_type,
@@ -50,6 +63,10 @@ def _write_audit_entry(request, claim, event_type, metadata=None):
     )
 
 
+# For beginners: This function '_normalize_msisdn' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function '_normalize_msisdn' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def _normalize_msisdn(phone_number):
     phone = str(phone_number or '').strip().replace(' ', '').replace('-', '')
     if phone.startswith('+'):
@@ -61,6 +78,10 @@ def _normalize_msisdn(phone_number):
     return phone
 
 
+# For beginners: This function '_normalize_documents' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function '_normalize_documents' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def _normalize_documents(documents):
     normalized = []
     for index, document in enumerate(documents or [], start=1):
@@ -75,6 +96,10 @@ def _normalize_documents(documents):
     return normalized
 
 
+# For beginners: This function '_store_uploaded_documents' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function '_store_uploaded_documents' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def _store_uploaded_documents(user, files):
     stored_documents = []
     for uploaded_file in files:
@@ -89,6 +114,10 @@ def _store_uploaded_documents(user, files):
     return stored_documents
 
 
+# For beginners: This function '_ai_summary' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function '_ai_summary' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def _ai_summary(ai_verification):
     if not ai_verification:
         return []
@@ -115,6 +144,10 @@ def _ai_summary(ai_verification):
     return [{'label': 'Result', 'value': ai_verification}]
 
 
+# For beginners: This function 'await_ai_analysis' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'await_ai_analysis' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def await_ai_analysis(claim, uploaded_files):
     """
     Process uploaded invoice documents with Azure AI Document Intelligence using custom models.
@@ -127,8 +160,9 @@ def await_ai_analysis(claim, uploaded_files):
         return
     
     try:
-        # Initialize Azure Blob Storage service for document upload
-        blob_storage_service = AzureBlobStorageService()
+        # Initialize Mongo Atlas storage service for document upload.
+        # blob_storage_service = AzureBlobStorageService()  # Azure path kept for review
+        blob_storage_service = MongoAtlasStorageService()
         
         # Initialize Azure AI Document Intelligence service with custom model
         # Note: In production, you would specify your custom model name here
@@ -187,6 +221,10 @@ def await_ai_analysis(claim, uploaded_files):
         # Don't fail the claim creation if AI analysis fails
 
 
+# For beginners: This function '_attach_claim_context' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function '_attach_claim_context' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def _attach_claim_context(claim):
     return {
         'claim': claim,
@@ -195,6 +233,10 @@ def _attach_claim_context(claim):
     }
 
 
+# For beginners: This function '_reject_or_request_info' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function '_reject_or_request_info' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def _reject_or_request_info(request, claim, event_type, new_status, default_message, notification_prefix):
     reason = request.POST.get('reason', '').strip()
     if not reason:
@@ -227,6 +269,10 @@ def _reject_or_request_info(request, claim, event_type, new_status, default_mess
     return redirect('claims_officer_dashboard')
 
 
+# For beginners: This function '_approve_claim' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function '_approve_claim' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def _approve_claim(request, claim):
     claim.status = 'approved'
     claim.reviewed_by = request.user
@@ -285,6 +331,10 @@ def _approve_claim(request, claim):
     return redirect('claims_officer_dashboard')
 
 
+# For beginners: This class 'ClaimViewSet' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'ClaimViewSet' groups related data and behavior
+# so other parts of the app can use one structured object.
 class ClaimViewSet(viewsets.ModelViewSet):
     """ViewSet for insurance claims."""
     
@@ -292,6 +342,10 @@ class ClaimViewSet(viewsets.ModelViewSet):
     lookup_field = 'claim_id'
     ordering = ['-submitted_at']
     
+    # For beginners: This function 'get_serializer_class' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'get_serializer_class' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def get_serializer_class(self):
         """Return appropriate serializer."""
         if self.action == 'create':
@@ -303,6 +357,10 @@ class ClaimViewSet(viewsets.ModelViewSet):
         else:
             return ClaimDetailSerializer
     
+    # For beginners: This function 'get_queryset' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'get_queryset' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def get_queryset(self):
         """Return claims based on user role."""
         user = self.request.user
@@ -321,6 +379,10 @@ class ClaimViewSet(viewsets.ModelViewSet):
             # Regular users see only their own claims
             return Claim.objects.filter(user_id=user).order_by('-submitted_at')
     
+    # For beginners: This function 'create' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'create' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def create(self, request, *args, **kwargs):
         """Submit new claim."""
         serializer = self.get_serializer(data=request.data, context={'request': request})
@@ -350,6 +412,10 @@ class ClaimViewSet(viewsets.ModelViewSet):
         output_serializer = ClaimDetailSerializer(claim)
         return Response(output_serializer.data, status=status.HTTP_201_CREATED)
     
+    # For beginners: This function 'partial_update' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'partial_update' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def partial_update(self, request, *args, **kwargs):
         """Claims officer reviews claim."""
         # Only claims officers can review
@@ -377,6 +443,10 @@ class ClaimViewSet(viewsets.ModelViewSet):
         return Response(output.data)
     
     @action(detail=False, methods=['get'])
+    # For beginners: This function 'my_claims' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'my_claims' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def my_claims(self, request):
         """Get user's own claims."""
         claims = Claim.objects.filter(user_id=request.user).order_by('-submitted_at')
@@ -384,6 +454,10 @@ class ClaimViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
     
     @action(detail=False, methods=['get'])
+    # For beginners: This function 'pending' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'pending' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def pending(self, request):
         """Get pending claims (claims officer view)."""
         if request.user.role != 'claims_officer':
@@ -399,6 +473,10 @@ class ClaimViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
     
     @action(detail=False, methods=['get'])
+    # For beginners: This function 'flagged' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'flagged' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def flagged(self, request):
         """Get AI-flagged claims (potential fraud)."""
         if request.user.role != 'claims_officer':
@@ -415,6 +493,10 @@ class ClaimViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
     
     @action(detail=True, methods=['post'])
+    # For beginners: This function 'approve_and_payout' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'approve_and_payout' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def approve_and_payout(self, request, claim_id=None):
         """Approve claim and initiate payout."""
         if request.user.role != 'claims_officer':
@@ -440,6 +522,10 @@ class ClaimViewSet(viewsets.ModelViewSet):
         return Response(output.data)
     
     @action(detail=True, methods=['post'])
+    # For beginners: This function 'reject' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'reject' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def reject(self, request, claim_id=None):
         """Reject claim."""
         if request.user.role != 'claims_officer':
@@ -465,6 +551,10 @@ class ClaimViewSet(viewsets.ModelViewSet):
         return Response(output.data)
     
     @action(detail=True, methods=['post'])
+    # For beginners: This function 'request_info' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'request_info' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def request_info(self, request, claim_id=None):
         """Request additional info from claimant."""
         if request.user.role != 'claims_officer':
@@ -486,6 +576,10 @@ class ClaimViewSet(viewsets.ModelViewSet):
         output = ClaimDetailSerializer(claim)
         return Response(output.data)
     
+    # For beginners: This function '_trigger_payout' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function '_trigger_payout' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def _trigger_payout(self, claim, request):
         """Trigger B2C M-Pesa payout for approved claim."""
         try:
@@ -510,6 +604,10 @@ class ClaimViewSet(viewsets.ModelViewSet):
 
 
 @login_required(login_url='login')
+# For beginners: This function 'claims_officer_dashboard_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'claims_officer_dashboard_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def claims_officer_dashboard_page(request):
     guard = _claims_officer_guard(request)
     if guard:
@@ -527,6 +625,10 @@ def claims_officer_dashboard_page(request):
 
 
 @login_required(login_url='login')
+# For beginners: This function 'claim_detail_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'claim_detail_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def claim_detail_page(request, claim_id):
     guard = _claims_officer_guard(request)
     if guard:
@@ -572,6 +674,10 @@ def claim_detail_page(request, claim_id):
     return render(request, 'claims/officer_detail.html', _attach_claim_context(claim))
 
 @login_required(login_url='login')
+# For beginners: This function 'claim_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'claim_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def claim_page(request):
     from apps.plans.models import InsurancePlan
     claims = Claim.objects.filter(user_id=request.user).order_by('-submitted_at')

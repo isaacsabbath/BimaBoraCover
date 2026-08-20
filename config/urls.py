@@ -1,3 +1,7 @@
+# For beginners: This file (config/urls.py) contains part of the application logic.
+# For beginners: Read this file from top to bottom to see what data it handles
+# and which functions/classes other files can call.
+
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings

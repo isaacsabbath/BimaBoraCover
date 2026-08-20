@@ -1,3 +1,7 @@
+# For beginners: This file (apps/users/services/kyc_analyzer.py) contains part of the application logic.
+# For beginners: Read this file from top to bottom to see what data it handles
+# and which functions/classes other files can call.
+
 """
 KYC Document Analysis Service using Azure AI Document Intelligence.
 
@@ -11,12 +15,22 @@ from azure.ai.documentintelligence import DocumentIntelligenceClient
 from azure.ai.documentintelligence.models import AnalyzeDocumentRequest
 from decouple import config
 
+from apps.users.services.mongo_storage import MongoAtlasStorageService
+
 logger = logging.getLogger(__name__)
 
 
+# For beginners: This class 'KYCAnalyzerService' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'KYCAnalyzerService' groups related data and behavior
+# so other parts of the app can use one structured object.
 class KYCAnalyzerService:
     """Service for analyzing KYC documents using Azure Document Intelligence."""
     
+    # For beginners: This function '__init__' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function '__init__' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def __init__(self):
         """Initialize the Document Intelligence client."""
         self.endpoint = config('AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT')
@@ -33,6 +47,10 @@ class KYCAnalyzerService:
             credential=AzureKeyCredential(self.key)
         )
     
+    # For beginners: This function 'analyze_id_document' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'analyze_id_document' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def analyze_id_document(self, document_url: str) -> Dict:
         """
         Analyze an ID document (national ID, passport, etc.) and extract information.
@@ -45,11 +63,17 @@ class KYCAnalyzerService:
         """
         try:
             logger.info(f"Analyzing ID document: {document_url}")
-            
-            poller = self.client.begin_analyze_document(
-                "prebuilt-idDocument",
-                AnalyzeDocumentRequest(url_source=document_url)
-            )
+
+            # Mongo-backed URLs are app-managed references; fetch bytes from GridFS.
+            if self._is_mongo_reference(document_url):
+                storage_service = MongoAtlasStorageService()
+                document_bytes = storage_service.get_file_bytes(document_url)
+                poller = self._begin_analyze_with_bytes(document_bytes)
+            else:
+                poller = self.client.begin_analyze_document(
+                    "prebuilt-idDocument",
+                    AnalyzeDocumentRequest(url_source=document_url)
+                )
             id_documents = poller.result()
             
             if not id_documents.documents:
@@ -79,7 +103,25 @@ class KYCAnalyzerService:
                 'error': str(e),
                 'raw_result': None
             }
+
+    def _begin_analyze_with_bytes(self, document_bytes):
+        """Handle SDK differences when sending file bytes to Azure Document Intelligence."""
+        try:
+            return self.client.begin_analyze_document(
+                "prebuilt-idDocument",
+                AnalyzeDocumentRequest(bytes_source=document_bytes)
+            )
+        except TypeError:
+            return self.client.begin_analyze_document("prebuilt-idDocument", document_bytes)
+
+    def _is_mongo_reference(self, document_url: str) -> bool:
+        prefix = config('MONGO_FILE_URL_PREFIX', default='https://mongo-atlas.local/file').rstrip('/')
+        return str(document_url).startswith(f"{prefix}/")
     
+    # For beginners: This function '_extract_id_fields' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function '_extract_id_fields' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def _extract_id_fields(self, id_document) -> Dict:
         """
         Extract relevant fields from an analyzed ID document.
@@ -132,6 +174,10 @@ class KYCAnalyzerService:
         
         return extracted
     
+    # For beginners: This function 'verify_kyc_data' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'verify_kyc_data' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def verify_kyc_data(self, extracted_data: Dict, user_data: Dict) -> Dict:
         """
         Verify extracted ID data against user registration data.
@@ -206,6 +252,10 @@ class KYCAnalyzerService:
         
         return verification_result
     
+    # For beginners: This function 'format_extraction_summary' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'format_extraction_summary' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def format_extraction_summary(self, extracted_data: Dict) -> str:
         """
         Format extracted data into a readable summary string.

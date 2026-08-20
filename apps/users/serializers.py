@@ -1,3 +1,7 @@
+# For beginners: This file (apps/users/serializers.py) contains part of the application logic.
+# For beginners: Read this file from top to bottom to see what data it handles
+# and which functions/classes other files can call.
+
 """
 Serializers for users app.
 """
@@ -10,9 +14,17 @@ from .models import User
 from .services.otp import generate_otp, send_otp_sms
 
 
+# For beginners: This class 'UserSerializer' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'UserSerializer' groups related data and behavior
+# so other parts of the app can use one structured object.
 class UserSerializer(serializers.ModelSerializer):
     """Serializer for User model."""
     
+    # For beginners: This class 'Meta' groups related data and behavior
+    # so other parts of the app can use one structured object.
+    # For beginners: This class 'Meta' groups related data and behavior
+    # so other parts of the app can use one structured object.
     class Meta:
         model = User
         fields = [
@@ -24,9 +36,17 @@ class UserSerializer(serializers.ModelSerializer):
         ]
 
 
+# For beginners: This class 'UserDetailSerializer' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'UserDetailSerializer' groups related data and behavior
+# so other parts of the app can use one structured object.
 class UserDetailSerializer(serializers.ModelSerializer):
     """Detailed serializer for User model including KYC info."""
     
+    # For beginners: This class 'Meta' groups related data and behavior
+    # so other parts of the app can use one structured object.
+    # For beginners: This class 'Meta' groups related data and behavior
+    # so other parts of the app can use one structured object.
     class Meta:
         model = User
         fields = [
@@ -39,6 +59,10 @@ class UserDetailSerializer(serializers.ModelSerializer):
         ]
 
 
+# For beginners: This class 'RegisterSerializer' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'RegisterSerializer' groups related data and behavior
+# so other parts of the app can use one structured object.
 class RegisterSerializer(serializers.ModelSerializer):
     """Serializer for user registration."""
     
@@ -53,6 +77,10 @@ class RegisterSerializer(serializers.ModelSerializer):
         style={'input_type': 'password'}
     )
     
+    # For beginners: This class 'Meta' groups related data and behavior
+    # so other parts of the app can use one structured object.
+    # For beginners: This class 'Meta' groups related data and behavior
+    # so other parts of the app can use one structured object.
     class Meta:
         model = User
         fields = [
@@ -60,12 +88,20 @@ class RegisterSerializer(serializers.ModelSerializer):
             'password', 'confirm_password', 'role'
         ]
     
+    # For beginners: This function 'validate_email' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'validate_email' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def validate_email(self, value):
         """Validate email uniqueness."""
         if User.objects.filter(email=value.lower()).exists():
             raise serializers.ValidationError('This email is already registered.')
         return value.lower()
     
+    # For beginners: This function 'validate_phone_number' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'validate_phone_number' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def validate_phone_number(self, value):
         """Validate phone number format."""
         value = value.strip().replace(' ', '').replace('-', '')
@@ -84,12 +120,20 @@ class RegisterSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('This phone number is already registered.')
         return value
     
+    # For beginners: This function 'validate_national_id' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'validate_national_id' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def validate_national_id(self, value):
         """Validate national ID uniqueness."""
         if User.objects.filter(national_id=value).exists():
             raise serializers.ValidationError('This national ID is already registered.')
         return value
     
+    # For beginners: This function 'validate' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'validate' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def validate(self, data):
         """Validate passwords match."""
         if data.get('password') != data.get('confirm_password'):
@@ -98,6 +142,10 @@ class RegisterSerializer(serializers.ModelSerializer):
             })
         return data
     
+    # For beginners: This function 'create' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'create' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def create(self, validated_data):
         """Create user and send OTP."""
         validated_data.pop('confirm_password')
@@ -124,12 +172,20 @@ class RegisterSerializer(serializers.ModelSerializer):
         return user
 
 
+# For beginners: This class 'OTPVerifySerializer' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'OTPVerifySerializer' groups related data and behavior
+# so other parts of the app can use one structured object.
 class OTPVerifySerializer(serializers.Serializer):
     """Serializer for OTP verification."""
     
     email = serializers.EmailField()
     otp_code = serializers.CharField(max_length=6, min_length=6)
     
+    # For beginners: This function 'validate' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'validate' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def validate(self, data):
         """Validate OTP matches user and hasn't expired."""
         try:
@@ -153,6 +209,10 @@ class OTPVerifySerializer(serializers.Serializer):
         data['user'] = user
         return data
     
+    # For beginners: This function 'save' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'save' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def save(self):
         """Activate user after successful OTP verification."""
         user = self.validated_data['user']
@@ -163,10 +223,18 @@ class OTPVerifySerializer(serializers.Serializer):
         return user
 
 
+# For beginners: This class 'TokenObtainPairSerializer' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'TokenObtainPairSerializer' groups related data and behavior
+# so other parts of the app can use one structured object.
 class TokenObtainPairSerializer(JWTTokenObtainPairSerializer):
     """Custom JWT token serializer including role and kyc_status."""
     
     @classmethod
+    # For beginners: This function 'get_token' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'get_token' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def get_token(cls, user):
         token = super().get_token(user)
         
@@ -179,11 +247,19 @@ class TokenObtainPairSerializer(JWTTokenObtainPairSerializer):
         return token
 
 
+# For beginners: This class 'PasswordResetRequestSerializer' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'PasswordResetRequestSerializer' groups related data and behavior
+# so other parts of the app can use one structured object.
 class PasswordResetRequestSerializer(serializers.Serializer):
     """Serializer for password reset request."""
     
     email = serializers.EmailField()
     
+    # For beginners: This function 'validate_email' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'validate_email' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def validate_email(self, value):
         """Check if email exists."""
         if not User.objects.filter(email=value.lower()).exists():
@@ -191,6 +267,10 @@ class PasswordResetRequestSerializer(serializers.Serializer):
         return value.lower()
 
 
+# For beginners: This class 'PasswordResetConfirmSerializer' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'PasswordResetConfirmSerializer' groups related data and behavior
+# so other parts of the app can use one structured object.
 class PasswordResetConfirmSerializer(serializers.Serializer):
     """Serializer for password reset confirmation."""
     
@@ -203,6 +283,10 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         style={'input_type': 'password'}
     )
     
+    # For beginners: This function 'validate' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'validate' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def validate(self, data):
         """Validate passwords match."""
         if data.get('new_password') != data.get('confirm_password'):
@@ -212,14 +296,26 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         return data
 
 
+# For beginners: This class 'ProfileUpdateSerializer' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'ProfileUpdateSerializer' groups related data and behavior
+# so other parts of the app can use one structured object.
 class ProfileUpdateSerializer(serializers.ModelSerializer):
     """Serializer for updating user profile."""
     
+    # For beginners: This class 'Meta' groups related data and behavior
+    # so other parts of the app can use one structured object.
+    # For beginners: This class 'Meta' groups related data and behavior
+    # so other parts of the app can use one structured object.
     class Meta:
         model = User
         fields = ['full_name', 'phone_number']
 
 
+# For beginners: This class 'KYCDocumentSubmitSerializer' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'KYCDocumentSubmitSerializer' groups related data and behavior
+# so other parts of the app can use one structured object.
 class KYCDocumentSubmitSerializer(serializers.Serializer):
     """Serializer for uploading and submitting KYC documents."""
     
@@ -232,6 +328,10 @@ class KYCDocumentSubmitSerializer(serializers.Serializer):
         help_text='Type of ID document being submitted'
     )
     
+    # For beginners: This function 'validate_document_file' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'validate_document_file' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def validate_document_file(self, value):
         """Validate file size and type."""
         # Check file size (max 10MB)
@@ -254,6 +354,10 @@ class KYCDocumentSubmitSerializer(serializers.Serializer):
         return value
 
 
+# For beginners: This class 'KYCVerificationResultSerializer' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'KYCVerificationResultSerializer' groups related data and behavior
+# so other parts of the app can use one structured object.
 class KYCVerificationResultSerializer(serializers.Serializer):
     """Serializer for KYC verification results."""
     
@@ -271,6 +375,10 @@ class KYCVerificationResultSerializer(serializers.Serializer):
     )
     
     
+# For beginners: This class 'KYCAnalysisDetailSerializer' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'KYCAnalysisDetailSerializer' groups related data and behavior
+# so other parts of the app can use one structured object.
 class KYCAnalysisDetailSerializer(serializers.Serializer):
     """Detailed serializer for KYC analysis response."""
     
@@ -284,6 +392,10 @@ class KYCAnalysisDetailSerializer(serializers.Serializer):
     )
 
 
+# For beginners: This class 'KYCDocumentDetailSerializer' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'KYCDocumentDetailSerializer' groups related data and behavior
+# so other parts of the app can use one structured object.
 class KYCDocumentDetailSerializer(serializers.Serializer):
     """Serializer for KYC document details."""
     

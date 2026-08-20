@@ -1,3 +1,7 @@
+# For beginners: This file (apps/payments/views_new.py) contains part of the application logic.
+# For beginners: Read this file from top to bottom to see what data it handles
+# and which functions/classes other files can call.
+
 """
 Views for M-Pesa payment processing.
 """
@@ -24,6 +28,10 @@ from apps.payments.services.daraja import DarajaClient
 logger = logging.getLogger(__name__)
 
 
+# For beginners: This class 'PaymentViewSet' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'PaymentViewSet' groups related data and behavior
+# so other parts of the app can use one structured object.
 class PaymentViewSet(viewsets.ModelViewSet):
     """ViewSet for payment processing."""
     
@@ -31,6 +39,10 @@ class PaymentViewSet(viewsets.ModelViewSet):
     lookup_field = 'payment_id'
     ordering = ['-initiated_at']
     
+    # For beginners: This function 'get_serializer_class' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'get_serializer_class' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def get_serializer_class(self):
         """Return appropriate serializer."""
         if self.action == 'initiate':
@@ -40,11 +52,19 @@ class PaymentViewSet(viewsets.ModelViewSet):
         else:
             return PaymentDetailSerializer
     
+    # For beginners: This function 'get_queryset' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'get_queryset' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def get_queryset(self):
         """Return user's payments."""
         return Payment.objects.filter(user_id=self.request.user).order_by('-initiated_at')
     
     @action(detail=False, methods=['post'])
+    # For beginners: This function 'initiate' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'initiate' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def initiate(self, request):
         """Initiate STK push payment request."""
         serializer = PaymentInitiateSerializer(data=request.data)
@@ -105,6 +125,10 @@ class PaymentViewSet(viewsets.ModelViewSet):
             )
     
     @action(detail=True, methods=['get'])
+    # For beginners: This function 'status' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'status' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def status(self, request, payment_id=None):
         """Poll payment status."""
         payment = self.get_object()
@@ -144,6 +168,10 @@ class PaymentViewSet(viewsets.ModelViewSet):
             })
     
     @action(detail=False, methods=['get'])
+    # For beginners: This function 'history' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'history' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def history(self, request):
         """Get payment history."""
         payments = self.get_queryset()
@@ -151,6 +179,10 @@ class PaymentViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
     
     @action(detail=False, methods=['get'])
+    # For beginners: This function 'pending' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'pending' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def pending(self, request):
         """Get pending payments."""
         payments = self.get_queryset().filter(status='pending')
@@ -161,6 +193,10 @@ class PaymentViewSet(viewsets.ModelViewSet):
 # M-Pesa callback endpoint (no auth required)
 @require_http_methods(["POST"])
 @csrf_exempt
+# For beginners: This function 'mpesa_callback' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'mpesa_callback' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def mpesa_callback(request):
     """
     Handle M-Pesa callback from Daraja.

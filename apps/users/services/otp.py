@@ -1,3 +1,7 @@
+# For beginners: This file (apps/users/services/otp.py) contains part of the application logic.
+# For beginners: Read this file from top to bottom to see what data it handles
+# and which functions/classes other files can call.
+
 """
 OTP service for user authentication.
 """
@@ -9,6 +13,10 @@ from django.conf import settings
 from django.core.cache import cache
 
 
+# For beginners: This function 'generate_otp' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'generate_otp' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def generate_otp():
     """
     Generate a 6-digit OTP.
@@ -19,6 +27,10 @@ def generate_otp():
     return ''.join(random.choices(string.digits, k=6))
 
 
+# For beginners: This function 'send_otp_sms' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'send_otp_sms' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def send_otp_sms(phone_number, otp_code):
     """
     Send OTP via Africa's Talking SMS.

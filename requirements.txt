@@ -12,6 +12,7 @@ africastalking==1.2.3
 weasyprint==60.1
 django-storages[azure]==1.14.2
 azure-storage-blob==12.19.0
+pymongo[srv]==4.8.0
 web3==6.11.3
 Pillow>=11.0.0
 black>=24.0.0

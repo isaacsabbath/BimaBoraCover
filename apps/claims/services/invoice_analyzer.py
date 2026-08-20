@@ -1,3 +1,7 @@
+# For beginners: This file (apps/claims/services/invoice_analyzer.py) contains part of the application logic.
+# For beginners: Read this file from top to bottom to see what data it handles
+# and which functions/classes other files can call.
+
 """
 Invoice Document Analysis Service using Azure AI Document Intelligence.
 
@@ -11,12 +15,22 @@ from azure.ai.documentintelligence import DocumentIntelligenceClient
 from azure.ai.documentintelligence.models import AnalyzeDocumentRequest
 from decouple import config
 
+from apps.users.services.mongo_storage import MongoAtlasStorageService
+
 logger = logging.getLogger(__name__)
 
 
+# For beginners: This class 'InvoiceAnalyzerService' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'InvoiceAnalyzerService' groups related data and behavior
+# so other parts of the app can use one structured object.
 class InvoiceAnalyzerService:
     """Service for analyzing invoice documents using Azure Document Intelligence with custom models."""
     
+    # For beginners: This function '__init__' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function '__init__' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def __init__(self, model_name: str = "prebuilt-invoice"):
         """Initialize the Document Intelligence client with custom model support."""
         self.endpoint = config('AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT')
@@ -34,6 +48,10 @@ class InvoiceAnalyzerService:
             credential=AzureKeyCredential(self.key)
         )
     
+    # For beginners: This function 'analyze_invoice' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'analyze_invoice' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def analyze_invoice(self, document_url: str, custom_fields: Optional[List[str]] = None) -> Dict:
         """
         Analyze an invoice document using custom model and extract custom fields.
@@ -47,12 +65,17 @@ class InvoiceAnalyzerService:
         """
         try:
             logger.info(f"Analyzing invoice document with custom model '{self.model_name}': {document_url}")
-            
-            # Use custom model for analysis
-            poller = self.client.begin_analyze_document(
-                self.model_name,
-                AnalyzeDocumentRequest(url_source=document_url)
-            )
+
+            # Mongo-backed URLs are app-managed references; fetch bytes from GridFS.
+            if self._is_mongo_reference(document_url):
+                storage_service = MongoAtlasStorageService()
+                document_bytes = storage_service.get_file_bytes(document_url)
+                poller = self._begin_analyze_with_bytes(document_bytes)
+            else:
+                poller = self.client.begin_analyze_document(
+                    self.model_name,
+                    AnalyzeDocumentRequest(url_source=document_url)
+                )
             invoice_result = poller.result()
             
             if not invoice_result.documents:
@@ -82,7 +105,25 @@ class InvoiceAnalyzerService:
                 'error': str(e),
                 'raw_result': None
             }
+
+    def _begin_analyze_with_bytes(self, document_bytes):
+        """Handle SDK differences when sending file bytes to Azure Document Intelligence."""
+        try:
+            return self.client.begin_analyze_document(
+                self.model_name,
+                AnalyzeDocumentRequest(bytes_source=document_bytes)
+            )
+        except TypeError:
+            return self.client.begin_analyze_document(self.model_name, document_bytes)
+
+    def _is_mongo_reference(self, document_url: str) -> bool:
+        prefix = config('MONGO_FILE_URL_PREFIX', default='https://mongo-atlas.local/file').rstrip('/')
+        return str(document_url).startswith(f"{prefix}/")
     
+    # For beginners: This function '_extract_custom_fields' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function '_extract_custom_fields' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def _extract_custom_fields(self, invoice_document, custom_fields: Optional[List[str]] = None) -> Dict:
         """
         Extract custom fields from an analyzed invoice document using custom model.
@@ -133,6 +174,10 @@ class InvoiceAnalyzerService:
         
         return extracted
     
+    # For beginners: This function '_get_field_value' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function '_get_field_value' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def _get_field_value(self, field) -> Optional[str]:
         """
         Extract value from a field object.
@@ -161,6 +206,10 @@ class InvoiceAnalyzerService:
         else:
             return str(field.value) if hasattr(field, 'value') else None
     
+    # For beginners: This function 'format_extraction_summary' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'format_extraction_summary' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def format_extraction_summary(self, extracted_data: Dict) -> str:
         """
         Format extracted data into a readable summary string.

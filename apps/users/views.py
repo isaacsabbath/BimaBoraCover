@@ -1,3 +1,7 @@
+# For beginners: This file (apps/users/views.py) contains part of the application logic.
+# For beginners: Read this file from top to bottom to see what data it handles
+# and which functions/classes other files can call.
+
 """
 API views + Template views for users app.
 """
@@ -30,7 +34,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView as JWTTokenObtain
 from rest_framework_simplejwt.views import TokenRefreshView
 from .models import User, KYCDocument
 from .services.kyc_analyzer import KYCAnalyzerService
-from .services.azure_storage import AzureBlobStorageService
+# from .services.azure_storage import AzureBlobStorageService  # Azure path kept for review
+from .services.mongo_storage import MongoAtlasStorageService
 from .serializers import (
     UserSerializer, UserDetailSerializer, RegisterSerializer,
     OTPVerifySerializer, TokenObtainPairSerializer,
@@ -42,15 +47,27 @@ from .serializers import (
 logger = logging.getLogger(__name__)
 
 
+# For beginners: This function '_generate_temp_password' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function '_generate_temp_password' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def _generate_temp_password(length=10):
     alphabet = string.ascii_letters + string.digits
     return ''.join(secrets.choice(alphabet) for _ in range(length))
 
 
+# For beginners: This function '_generate_setup_code' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function '_generate_setup_code' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def _generate_setup_code(length=6):
     return ''.join(secrets.choice(string.digits) for _ in range(length))
 
 
+# For beginners: This function '_generate_autogen_email' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function '_generate_autogen_email' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def _generate_autogen_email(national_id):
     """Create a unique internal email when signup is driven by doc extraction."""
     base = f"{str(national_id).strip().lower()}@autogen.bimabora.local"
@@ -66,16 +83,28 @@ def _generate_autogen_email(national_id):
     return f"user-{secrets.token_hex(4)}@autogen.bimabora.local"
 
 
+# For beginners: This function '_is_claims_officer_setup_pending' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function '_is_claims_officer_setup_pending' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def _is_claims_officer_setup_pending(user):
     return user.role == 'claims_officer' and bool(user.otp_code)
 
 
+# For beginners: This class 'RegisterView' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'RegisterView' groups related data and behavior
+# so other parts of the app can use one structured object.
 class RegisterView(viewsets.ViewSet):
     """User registration endpoint."""
     
     permission_classes = [AllowAny]
     
     @action(detail=False, methods=['post'])
+    # For beginners: This function 'register' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'register' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def register(self, request):
         """
         Register a new user account.
@@ -104,12 +133,20 @@ class RegisterView(viewsets.ViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+# For beginners: This class 'OTPVerifyView' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'OTPVerifyView' groups related data and behavior
+# so other parts of the app can use one structured object.
 class OTPVerifyView(viewsets.ViewSet):
     """OTP verification endpoint."""
     
     permission_classes = [AllowAny]
     
     @action(detail=False, methods=['post'])
+    # For beginners: This function 'verify' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'verify' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def verify(self, request):
         """
         Verify OTP and activate account.
@@ -133,24 +170,40 @@ class OTPVerifyView(viewsets.ViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+# For beginners: This class 'TokenObtainPairView' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'TokenObtainPairView' groups related data and behavior
+# so other parts of the app can use one structured object.
 class TokenObtainPairView(JWTTokenObtainPairView):
     """Custom JWT token endpoint with role and kyc_status."""
     
     serializer_class = TokenObtainPairSerializer
 
 
+# For beginners: This class 'MeView' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'MeView' groups related data and behavior
+# so other parts of the app can use one structured object.
 class MeView(viewsets.ViewSet):
     """Get and update authenticated user profile."""
     
     permission_classes = [IsAuthenticated]
     
     @action(detail=False, methods=['get'])
+    # For beginners: This function 'me' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'me' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def me(self, request):
         """Get authenticated user's profile."""
         serializer = UserDetailSerializer(request.user)
         return Response(serializer.data)
     
     @action(detail=False, methods=['patch'])
+    # For beginners: This function 'update_profile' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'update_profile' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def update_profile(self, request):
         """Update authenticated user's profile."""
         serializer = ProfileUpdateSerializer(
@@ -171,6 +224,10 @@ class MeView(viewsets.ViewSet):
 
 # ─── Template Views ───────────────────────────────────────────────────────────
 
+# For beginners: This function 'login_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'login_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def login_page(request):
     if request.user.is_authenticated:
         if _is_claims_officer_setup_pending(request.user):
@@ -187,6 +244,10 @@ def login_page(request):
     return render(request, 'users/login.html', {})
 
 
+# For beginners: This function 'register_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'register_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def register_page(request):
     if request.user.is_authenticated:
         return redirect('home')
@@ -241,12 +302,20 @@ def register_page(request):
 
 
 
+# For beginners: This function 'logout_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'logout_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def logout_page(request):
     logout(request)
     return redirect('login')
 
 
 @login_required(login_url='login')
+# For beginners: This function 'profile_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'profile_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def profile_page(request):
     if request.method == 'POST':
         u = request.user
@@ -259,6 +328,10 @@ def profile_page(request):
 
 
 @login_required(login_url='login')
+# For beginners: This function 'change_password_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'change_password_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def change_password_page(request):
     if request.method == 'POST':
         old = request.POST.get('old_password')
@@ -279,6 +352,10 @@ def change_password_page(request):
     return render(request, 'users/change_password.html', {})
 
 
+# For beginners: This function 'otp_verify_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'otp_verify_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def otp_verify_page(request):
     if request.user.is_authenticated:
         return redirect('home')
@@ -303,6 +380,10 @@ def otp_verify_page(request):
     })
 
 
+# For beginners: This function 'password_reset_request_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'password_reset_request_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def password_reset_request_page(request):
     if request.method == 'POST':
         email = request.POST.get('email', '').strip().lower()
@@ -326,6 +407,10 @@ def password_reset_request_page(request):
 
 
 @login_required(login_url='login')
+# For beginners: This function 'claims_officer_queue_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'claims_officer_queue_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def claims_officer_queue_page(request):
     """Simple claims officer triage page for KYC `review` items.
 
@@ -379,6 +464,10 @@ def claims_officer_queue_page(request):
     return render(request, 'users/claims_officer_queue.html', {'queue': review_qs})
 
 
+# For beginners: This function 'password_reset_confirm_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'password_reset_confirm_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def password_reset_confirm_page(request, uidb64, token):
     user = None
     try:
@@ -411,6 +500,10 @@ def password_reset_confirm_page(request, uidb64, token):
 
 
 @login_required(login_url='login')
+# For beginners: This function 'dashboard_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'dashboard_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def dashboard_page(request):
     if request.user.role == 'claims_officer':
         return redirect('claims_officer_dashboard')
@@ -437,6 +530,10 @@ def dashboard_page(request):
 
 
 @login_required(login_url='login')
+# For beginners: This function 'claims_officer_setup_password_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'claims_officer_setup_password_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def claims_officer_setup_password_page(request):
     if request.user.role != 'claims_officer' or not request.user.otp_code:
         return redirect('claims_officer_dashboard')
@@ -462,6 +559,10 @@ def claims_officer_setup_password_page(request):
 
 
 @login_required(login_url='login')
+# For beginners: This function 'create_claims_officer_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
+# For beginners: This function 'create_claims_officer_page' performs one reusable task.
+# Other parts of the app call it to avoid duplicating logic.
 def create_claims_officer_page(request):
     if request.user.role != 'super_admin':
         messages.error(request, 'Only super admins can create claims officers.')
@@ -552,12 +653,20 @@ def create_claims_officer_page(request):
     })
 
 
+# For beginners: This class 'PasswordResetView' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'PasswordResetView' groups related data and behavior
+# so other parts of the app can use one structured object.
 class PasswordResetView(viewsets.ViewSet):
     """Password reset endpoints."""
     
     permission_classes = [AllowAny]
     
     @action(detail=False, methods=['post'])
+    # For beginners: This function 'request_reset' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'request_reset' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def request_reset(self, request):
         """Request password reset token via email."""
         serializer = PasswordResetRequestSerializer(data=request.data)
@@ -569,6 +678,10 @@ class PasswordResetView(viewsets.ViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     @action(detail=False, methods=['post'])
+    # For beginners: This function 'confirm_reset' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'confirm_reset' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def confirm_reset(self, request):
         """Confirm password reset with token."""
         serializer = PasswordResetConfirmSerializer(data=request.data)
@@ -580,12 +693,20 @@ class PasswordResetView(viewsets.ViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+# For beginners: This class 'KYCView' groups related data and behavior
+# so other parts of the app can use one structured object.
+# For beginners: This class 'KYCView' groups related data and behavior
+# so other parts of the app can use one structured object.
 class KYCView(viewsets.ViewSet):
     """KYC document analysis and verification endpoints."""
     
     permission_classes = [IsAuthenticated]
     
     @action(detail=False, methods=['post'])
+    # For beginners: This function 'submit_document' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'submit_document' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def submit_document(self, request):
         """
         Submit a KYC ID document for analysis.
@@ -624,9 +745,10 @@ class KYCView(viewsets.ViewSet):
             
             logger.info(f"Created KYCDocument record {kyc_document.id} for user {request.user.id}")
             
-            # Step 2: Upload to Azure Blob Storage
+            # Step 2: Upload to Mongo Atlas GridFS
             try:
-                blob_service = AzureBlobStorageService()
+                # blob_service = AzureBlobStorageService()  # Azure path kept for review
+                blob_service = MongoAtlasStorageService()
                 document_url = blob_service.upload_kyc_document(
                     file_obj=serializer.validated_data['document_file'],
                     document_type=serializer.validated_data['document_type'],
@@ -764,6 +886,10 @@ class KYCView(viewsets.ViewSet):
             )
     
     @action(detail=False, methods=['get'])
+    # For beginners: This function 'status' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'status' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def status(self, request):
         """Get current KYC status and verification result."""
         return Response({
@@ -773,6 +899,10 @@ class KYCView(viewsets.ViewSet):
         })
     
     @action(detail=False, methods=['get'])
+    # For beginners: This function 'documents' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'documents' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def documents(self, request):
         """Get all KYC documents uploaded by the user."""
         documents = KYCDocument.objects.filter(user=request.user).values(
@@ -784,6 +914,10 @@ class KYCView(viewsets.ViewSet):
         })
     
     @action(detail='id', methods=['get'])
+    # For beginners: This function 'document_detail' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
+    # For beginners: This function 'document_detail' performs one reusable task.
+    # Other parts of the app call it to avoid duplicating logic.
     def document_detail(self, request, id=None):
         """Get details of a specific KYC document."""
         try:
