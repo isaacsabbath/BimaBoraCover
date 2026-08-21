@@ -9,5 +9,6 @@ __pycache__
 *.md
 *.sh
 .env
+certs/
 db.sqlite3
 bustling-wharf-491620-b8-735712685e70.json

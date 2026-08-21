@@ -197,6 +197,26 @@ DARAJA_PASSKEY = config('DARAJA_PASSKEY', default='')
 DARAJA_CALLBACK_URL = config('DARAJA_CALLBACK_URL', default='')
 DARAJA_ENV = config('DARAJA_ENV', default='sandbox')
 
+# B2C (claim payout) settings.
+#
+# DARAJA_INITIATOR_NAME — the API operator username for B2C requests.
+# 'testapi' is the standard sandbox initiator and works out of the box
+# against the Daraja sandbox. In production this MUST be the real
+# initiator/operator username issued on your Daraja portal (Go Live ->
+# API operator), and it must be the same identity whose password you
+# encrypt into DARAJA_SECURITY_CREDENTIAL below — a mismatch between
+# the two is the most common cause of "The initiator information is
+# invalid" errors from the B2C endpoint.
+DARAJA_INITIATOR_NAME = config('DARAJA_INITIATOR_NAME', default='testapi')
+
+# DARAJA_SECURITY_CREDENTIAL — the RSA-encrypted initiator password
+# Daraja expects on every B2C request. This is NOT the raw password:
+# it's the initiator password encrypted against Safaricom's public
+# certificate (PKCS1v15 padding), base64-encoded. Generate it with
+# scripts/generate_security_credential.py and paste the output here
+# (via .env) — see that script's docstring for the full walkthrough.
+DARAJA_SECURITY_CREDENTIAL = config('DARAJA_SECURITY_CREDENTIAL', default='')
+
 # Africa's Talking Configuration
 AT_API_KEY = config('AT_API_KEY', default='')
 AT_USERNAME = config('AT_USERNAME', default='sandbox')

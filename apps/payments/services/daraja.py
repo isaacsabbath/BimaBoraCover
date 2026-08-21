@@ -201,7 +201,7 @@ class DarajaClient:
         url = f"{self.BASE_URL}/mpesa/b2c/v1/paymentrequest"
         
         payload = {
-            "InitiatorName": "testapi",
+            "InitiatorName": settings.DARAJA_INITIATOR_NAME,
             "SecurityCredential": settings.DARAJA_SECURITY_CREDENTIAL,
             "CommandID": "SalaryPayment",  # Or BusinessPayment, PromotionPayment
             "Amount": int(amount),
