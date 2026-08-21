@@ -1,0 +1,26 @@
+<!-- For beginners: This template (apps/chamas/templates/chamas/invite_accept.html) defines what users see in the browser. -->
+<!-- For beginners: Dynamic values are inserted by Django views before this HTML is sent. -->
+
+{% extends 'base.html' %}
+{% block title %}Join {{ chama.group_name }} - BimaBora{% endblock %}
+{% block content %}
+<div class="container mx-auto px-4 py-10 max-w-md">
+  <div class="bg-white rounded-xl shadow-sm p-6 text-center">
+    <div class="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center text-primary font-bold mx-auto mb-4 text-lg">
+      {{ chama.group_name|slice:":2"|upper }}
+    </div>
+    <h2 class="text-xl font-bold text-gray-800 mb-1">Join {{ chama.group_name }}</h2>
+    <p class="text-gray-500 text-sm mb-6">
+      You've been invited to join this chama on Bima Afya.
+      Accepting will add you as a member.
+    </p>
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="w-full bg-primary text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-blue-600 transition-colors">
+        Accept &amp; Join
+      </button>
+    </form>
+    <a href="{% url 'chama' %}" class="block mt-3 text-xs text-gray-400 hover:text-gray-600">Not now</a>
+  </div>
+</div>
+{% endblock %}

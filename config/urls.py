@@ -25,7 +25,7 @@ from apps.claims.views import claim_page
 from apps.claims.views import claims_officer_dashboard_page, claim_detail_page
 from apps.claims.views import claims_officer_payouts_page, claims_officer_retry_payout
 from apps.payments.views import payment_page
-from apps.chamas.views import chama_page, chama_detail_page, chama_create_page, chama_invite_page
+from apps.chamas.views import chama_page, chama_detail_page, chama_create_page, chama_invite_page, chama_invite_accept_page
 
 
 urlpatterns = [
@@ -57,6 +57,7 @@ urlpatterns = [
     path('chama/', chama_page, name='chama'),
     path('chama/create/', chama_create_page, name='chama_create'),
     path('chama/invite/', chama_invite_page, name='chama_invite'),
+    path('chama/invite/accept/<str:token>/', chama_invite_accept_page, name='chama_invite_accept'),
     path('chama/<uuid:chama_id>/', chama_detail_page, name='chama_detail'),
 
     # REST API

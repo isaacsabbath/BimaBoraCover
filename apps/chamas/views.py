@@ -10,8 +10,10 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.views.decorators.http import require_POST
+from django.urls import reverse
 import uuid
 from django.core.cache import cache
+from apps.chamas.tasks import queue_chama_invite_email
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -131,10 +133,17 @@ class ChamaViewSet(viewsets.ModelViewSet):
             {'chama_id': str(chama_id), 'user_id': str(invite_user.user_id), 'email': email},
             timeout=48 * 3600  # 48 hours
         )
-        
-        # TODO: Send SMS/Email via Africa's Talking
-        # For now, just return the token for testing
-        
+
+        invite_link = request.build_absolute_uri(
+            reverse('chama_invite_accept', args=[token])
+        )
+        queue_chama_invite_email(
+            email=email,
+            chama_name=chama.group_name,
+            invite_link=invite_link,
+            inviter_name=request.user.full_name,
+        )
+
         return Response({
             'message': 'Invitation sent',
             'token': token,
@@ -290,3 +299,46 @@ def chama_invite_page(request):
     except User.DoesNotExist:
         messages.error(request, 'No user found with that email.')
     return redirect('chama')
+
+
+@login_required(login_url='login')
+# For beginners: This function 'chama_invite_accept_page' performs one
+# reusable task — it's the page the invitee lands on when they click the
+# link in the invite email, since the DRF join_via_token action is a
+# POST-only API endpoint and isn't something a browser link can hit directly.
+def chama_invite_accept_page(request, token):
+    """GET: show invite details with an Accept button.
+    POST: join the chama and redirect to it."""
+    invite_data = cache.get(f'chama_invite:{token}')
+
+    if not invite_data:
+        messages.error(request, 'This invite link is invalid or has expired.')
+        return redirect('chama')
+
+    chama = get_object_or_404(Chama, chama_id=invite_data['chama_id'])
+
+    # The invite was issued for a specific email/user — if the logged-in
+    # user doesn't match, don't silently add the wrong account.
+    if str(request.user.user_id) != invite_data['user_id']:
+        messages.error(
+            request,
+            f"This invite was sent to {invite_data['email']}. "
+            f"Please log in with that account to accept it."
+        )
+        return redirect('chama')
+
+    if request.method == 'POST':
+        member, created = ChamaMember.objects.get_or_create(
+            chama_id=chama,
+            user_id=request.user,
+            defaults={'status': 'active'}
+        )
+        if not created:
+            member.status = 'active'
+            member.save(update_fields=['status'])
+
+        cache.delete(f'chama_invite:{token}')
+        messages.success(request, f'You joined {chama.group_name}!')
+        return redirect('chama')
+
+    return render(request, 'chamas/invite_accept.html', {'chama': chama, 'token': token})
