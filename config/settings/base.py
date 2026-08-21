@@ -222,6 +222,17 @@ DARAJA_INITIATOR_NAME = config('DARAJA_INITIATOR_NAME', default='testapi')
 # shortcode listed next to your B2C SecurityCredential.
 DARAJA_B2C_SHORTCODE = config('DARAJA_B2C_SHORTCODE', default=DARAJA_SHORTCODE)
 
+# DARAJA_SANDBOX_TEST_PHONE — the fixed MSISDN Daraja's sandbox accepts
+# as a B2C recipient. Sandbox doesn't actually deliver anywhere, and
+# it rejects any PartyB other than this one number with "Invalid
+# PartyB" — real, correctly-formatted customer numbers included. Used
+# automatically by DarajaClient.b2c_payout() to substitute in for the
+# claimant's real phone whenever settings.DEBUG is True (the same flag
+# BASE_URL above uses to pick the sandbox vs production Daraja host),
+# so nobody has to hand-edit a test user's phone number to exercise
+# the payout flow. Has no effect once DEBUG=False in production.
+DARAJA_SANDBOX_TEST_PHONE = config('DARAJA_SANDBOX_TEST_PHONE', default='254708374149')
+
 # DARAJA_SECURITY_CREDENTIAL — the RSA-encrypted initiator password
 # Daraja expects on every B2C request. This is NOT the raw password:
 # it's the initiator password encrypted against Safaricom's public

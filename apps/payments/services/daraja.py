@@ -217,16 +217,36 @@ class DarajaClient:
             dict with ConversationID and ResponseCode
         """
         token = self.get_access_token()
-        
+
         url = f"{self.BASE_URL}/mpesa/b2c/v1/paymentrequest"
-        
+
+        payout_phone = phone_number
+        if settings.DEBUG and phone_number != settings.DARAJA_SANDBOX_TEST_PHONE:
+            # Sandbox doesn't deliver anywhere and only accepts this one
+            # fixed test MSISDN as PartyB — any other number, including a
+            # real customer's, comes back "Invalid PartyB". Swap it in
+            # automatically so payouts can be tested without editing a
+            # claimant's actual phone number. The real number still shows
+            # up in logs and the audit entry below for traceability.
+            #
+            # Keyed off settings.DEBUG (not DARAJA_ENV) deliberately —
+            # that's what BASE_URL above actually uses to pick between
+            # sandbox.safaricom.co.ke and api.safaricom.co.ke, so this
+            # stays correct even if DARAJA_ENV and DEBUG ever disagree.
+            logger.info(
+                f"Sandbox B2C: substituting test MSISDN "
+                f"{settings.DARAJA_SANDBOX_TEST_PHONE} for real number "
+                f"{phone_number} (reference={reference})"
+            )
+            payout_phone = settings.DARAJA_SANDBOX_TEST_PHONE
+
         payload = {
             "InitiatorName": settings.DARAJA_INITIATOR_NAME,
             "SecurityCredential": settings.DARAJA_SECURITY_CREDENTIAL,
             "CommandID": "SalaryPayment",  # Or BusinessPayment, PromotionPayment
             "Amount": int(amount),
             "PartyA": self.b2c_shortcode,
-            "PartyB": phone_number,
+            "PartyB": payout_phone,
             "Remarks": description,
             "QueueTimeOutURL": settings.DARAJA_CALLBACK_URL,
             "ResultURL": settings.DARAJA_CALLBACK_URL,
