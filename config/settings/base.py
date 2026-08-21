@@ -236,7 +236,7 @@ AT_USERNAME = config('AT_USERNAME', default='sandbox')
 AT_SENDER_ID = config('AT_SENDER_ID', default='BimaAfya')
 # AT doesn't sign delivery report callbacks, so we verify authenticity via a
 # shared-secret query param on the callback URL itself (the pattern AT's own
-# docs recommend): .../sms/delivery-callback/?key=<AT_CALLBACK_SECRET>
+# docs recommend): .../sms/delivery/?key=<AT_CALLBACK_SECRET>
 AT_CALLBACK_SECRET = config('AT_CALLBACK_SECRET', default='')
 
 # Azure Blob Storage Configuration (commented for migration review)

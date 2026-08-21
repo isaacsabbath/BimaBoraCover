@@ -61,6 +61,10 @@ urlpatterns = [
     path('chama/invite/accept/<str:token>/', chama_invite_accept_page, name='chama_invite_accept'),
     path('chama/<uuid:chama_id>/', chama_detail_page, name='chama_detail'),
 
+    # Africa's Talking SMS delivery reports — kept at a short top-level path
+    # (not under api/v1/) to match the URL registered in the AT Dashboard.
+    path('sms/delivery/', sms_delivery_callback, name='sms-delivery-callback'),
+
     # REST API
     path('api/v1/', include([
         path('auth/', include('apps.users.urls')),
@@ -69,7 +73,6 @@ urlpatterns = [
         path('payments/', include('apps.payments.urls')),
         path('claims/', include('apps.claims.urls')),
         path('admin/', include('apps.audit.urls')),
-        path('sms/delivery-callback/', sms_delivery_callback, name='sms-delivery-callback'),
     ])),
 ]
 

@@ -955,11 +955,10 @@ def sms_delivery_callback(request):
     for every SMS this account sends, regardless of which feature sent it
     (OTP, chama invites, etc).
 
-    AT doesn't sign these requests, so authenticity is checked via a shared
-    secret in the query string instead: .../sms/delivery-callback/?key=<secret>
-    (the pattern AT's own docs recommend, since there's no HMAC header to
-    verify against). Requests with a missing/wrong key are rejected before
-    any data is read.
+    Authenticity is checked via a shared secret in the query string instead:
+    .../sms/delivery/?key=<secret> (the pattern AT's own docs recommend,
+    since there's no HMAC header to verify against). Requests with a
+    missing/wrong key are rejected before any data is read.
 
     AT POSTs form-encoded (not JSON) fields, notably:
         id            - AT's message ID (e.g. "ATXid_xxxxxxxxxxxx")
