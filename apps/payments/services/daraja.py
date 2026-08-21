@@ -11,6 +11,7 @@ import base64
 import logging
 from datetime import datetime
 from django.conf import settings
+from django.core.cache import cache
 from django.utils import timezone
 
 logger = logging.getLogger(__name__)
@@ -60,10 +61,23 @@ class DarajaClient:
     # For beginners: This function 'get_access_token' performs one reusable task.
     # Other parts of the app call it to avoid duplicating logic.
     def get_access_token(self):
-        """Get OAuth 2.0 access token from Daraja."""
-        if self.access_token and self.token_expires_at and timezone.now() < self.token_expires_at:
-            return self.access_token
-        
+        """Get OAuth 2.0 access token from Daraja.
+
+        Cached in Django's cache framework (shared across requests/instances),
+        NOT just on self — every view creates a fresh DarajaClient() per
+        request (see PaymentViewSet.status, stk_push, etc.), so instance-level
+        caching alone does nothing across the payment status polling loop,
+        which hits this every 3 seconds for up to 90 seconds. Without shared
+        caching, that's 30+ fresh OAuth requests to Safaricom's sandbox in
+        under two minutes, which trips their (undocumented) rate limit and
+        returns 403 Forbidden instead of a token.
+        """
+        cache_key = f'daraja_access_token:{"sandbox" if settings.DEBUG else "live"}'
+        cached_token = cache.get(cache_key)
+        if cached_token:
+            self.access_token = cached_token
+            return cached_token
+
         url = f"{self.BASE_URL}/oauth/v1/generate?grant_type=client_credentials"
         credentials = base64.b64encode(
             f"{self.consumer_key}:{self.consumer_secret}".encode()
@@ -77,7 +91,9 @@ class DarajaClient:
             data = response.json()
             
             self.access_token = data['access_token']
-            # Token expires in 3600 seconds, set expiry 5 min before
+            # Token expires in 3600 seconds; cache for 5 min less than that
+            # so we never hand out a token that's about to expire mid-request.
+            cache.set(cache_key, self.access_token, timeout=3300)
             self.token_expires_at = timezone.now() + timezone.timedelta(seconds=3595)
             return self.access_token
         
