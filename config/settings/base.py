@@ -209,6 +209,19 @@ DARAJA_ENV = config('DARAJA_ENV', default='sandbox')
 # invalid" errors from the B2C endpoint.
 DARAJA_INITIATOR_NAME = config('DARAJA_INITIATOR_NAME', default='testapi')
 
+# DARAJA_B2C_SHORTCODE — the organization shortcode B2C requests use
+# as PartyA. In the Daraja SANDBOX this is deliberately a different
+# test shortcode from DARAJA_SHORTCODE (which is the 174379 STK/C2B
+# paybill) — B2C has its own test org shortcode (commonly in the
+# 600xxx range) that's paired with the 'testapi' initiator and the
+# SecurityCredential shown on the same Test Credentials page. Using
+# 174379 for B2C is a common cause of a bare "400 Bad Request" with
+# no other explanation. Defaults to DARAJA_SHORTCODE for backwards
+# compatibility, but sandbox B2C almost always needs this overridden —
+# check the Test Credentials page on the Daraja portal for the
+# shortcode listed next to your B2C SecurityCredential.
+DARAJA_B2C_SHORTCODE = config('DARAJA_B2C_SHORTCODE', default=DARAJA_SHORTCODE)
+
 # DARAJA_SECURITY_CREDENTIAL — the RSA-encrypted initiator password
 # Daraja expects on every B2C request. This is NOT the raw password:
 # it's the initiator password encrypted against Safaricom's public

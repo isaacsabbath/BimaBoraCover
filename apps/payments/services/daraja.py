@@ -8,9 +8,12 @@ Daraja M-Pesa API integration wrapper.
 
 import requests
 import base64
+import logging
 from datetime import datetime
 from django.conf import settings
 from django.utils import timezone
+
+logger = logging.getLogger(__name__)
 
 
 # For beginners: This class 'DarajaClient' groups related data and behavior
@@ -30,6 +33,7 @@ class DarajaClient:
         self.consumer_key = settings.DARAJA_CONSUMER_KEY
         self.consumer_secret = settings.DARAJA_CONSUMER_SECRET
         self.shortcode = settings.DARAJA_SHORTCODE
+        self.b2c_shortcode = getattr(settings, 'DARAJA_B2C_SHORTCODE', settings.DARAJA_SHORTCODE)
         self.passkey = settings.DARAJA_PASSKEY
         self.access_token = None
         self.token_expires_at = None
@@ -205,7 +209,7 @@ class DarajaClient:
             "SecurityCredential": settings.DARAJA_SECURITY_CREDENTIAL,
             "CommandID": "SalaryPayment",  # Or BusinessPayment, PromotionPayment
             "Amount": int(amount),
-            "PartyA": self.shortcode,
+            "PartyA": self.b2c_shortcode,
             "PartyB": phone_number,
             "Remarks": description,
             "QueueTimeOutURL": settings.DARAJA_CALLBACK_URL,
@@ -222,6 +226,21 @@ class DarajaClient:
             response = requests.post(url, json=payload, headers=headers, timeout=10)
             response.raise_for_status()
             return response.json()
-        
+
+        except requests.exceptions.HTTPError as e:
+            # Daraja always returns a JSON body describing exactly what was
+            # wrong (e.g. {"errorCode": "400.002.02", "errorMessage":
+            # "Bad Request - Invalid BusinessShortCode"}). raise_for_status()
+            # above discards that body, so without this we'd only ever see
+            # a generic "400 Client Error: Bad Request" with no way to tell
+            # *why* — surface the real message instead.
+            try:
+                detail = e.response.json()
+                message = detail.get('errorMessage') or detail.get('ResponseDescription') or str(detail)
+            except ValueError:
+                message = e.response.text or str(e)
+            logger.error(f"B2C payout HTTP error: {message}")
+            raise ValueError(f"B2C payout failed: {message}")
+
         except requests.exceptions.RequestException as e:
             raise ValueError(f"B2C payout failed: {str(e)}")
