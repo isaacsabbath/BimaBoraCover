@@ -11,7 +11,8 @@ import secrets
 import string
 import logging
 from django.shortcuts import render, redirect
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
+from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -939,3 +940,56 @@ class KYCView(viewsets.ViewSet):
                 {'error': 'KYC document not found'},
                 status=status.HTTP_404_NOT_FOUND
             )
+
+
+@csrf_exempt
+# For beginners: This function 'sms_delivery_callback' performs one reusable
+# task. Other parts of the app call it to avoid duplicating logic.
+def sms_delivery_callback(request):
+    """
+    Receives SMS delivery status reports from Africa's Talking.
+
+    Unlike Daraja (M-Pesa), AT does NOT accept a callback URL as a parameter
+    on each send() call — this URL is instead registered ONCE in the AT
+    Dashboard (SMS > Callback URLs > "Delivery Reports"), and AT posts here
+    for every SMS this account sends, regardless of which feature sent it
+    (OTP, chama invites, etc).
+
+    AT doesn't sign these requests, so authenticity is checked via a shared
+    secret in the query string instead: .../sms/delivery-callback/?key=<secret>
+    (the pattern AT's own docs recommend, since there's no HMAC header to
+    verify against). Requests with a missing/wrong key are rejected before
+    any data is read.
+
+    AT POSTs form-encoded (not JSON) fields, notably:
+        id            - AT's message ID (e.g. "ATXid_xxxxxxxxxxxx")
+        status        - "Success", "Failed", "Rejected", or "Buffered"
+        phoneNumber   - recipient in +2547XXXXXXXX format
+        networkCode   - carrier network code
+        failureReason - present when status is not "Success"
+        retryCount    - number of delivery retries attempted
+    """
+    if request.method != 'POST':
+        return HttpResponse(status=405)
+
+    provided_key = request.GET.get('key', '')
+    expected_key = getattr(settings, 'AT_CALLBACK_SECRET', '')
+
+    if not expected_key or provided_key != expected_key:
+        logger.warning('Rejected SMS delivery callback with invalid key')
+        return HttpResponse(status=403)
+
+    message_id = request.POST.get('id', '')
+    delivery_status = request.POST.get('status', '')
+    phone_number = request.POST.get('phoneNumber', '')
+    failure_reason = request.POST.get('failureReason', '')
+    retry_count = request.POST.get('retryCount', '')
+
+    logger.info(
+        'AT SMS delivery report: id=%s status=%s phone=%s failure_reason=%s retry_count=%s',
+        message_id, delivery_status, phone_number, failure_reason, retry_count,
+    )
+
+    # AT expects a 200 response to consider the report delivered; no
+    # meaningful response body is required.
+    return HttpResponse(status=200)

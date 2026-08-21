@@ -234,6 +234,10 @@ DARAJA_SECURITY_CREDENTIAL = config('DARAJA_SECURITY_CREDENTIAL', default='')
 AT_API_KEY = config('AT_API_KEY', default='')
 AT_USERNAME = config('AT_USERNAME', default='sandbox')
 AT_SENDER_ID = config('AT_SENDER_ID', default='BimaAfya')
+# AT doesn't sign delivery report callbacks, so we verify authenticity via a
+# shared-secret query param on the callback URL itself (the pattern AT's own
+# docs recommend): .../sms/delivery-callback/?key=<AT_CALLBACK_SECRET>
+AT_CALLBACK_SECRET = config('AT_CALLBACK_SECRET', default='')
 
 # Azure Blob Storage Configuration (commented for migration review)
 # AZURE_ACCOUNT_NAME = config('AZURE_ACCOUNT_NAME', default='')

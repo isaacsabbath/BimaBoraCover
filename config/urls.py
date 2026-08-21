@@ -26,6 +26,7 @@ from apps.claims.views import claims_officer_dashboard_page, claim_detail_page
 from apps.claims.views import claims_officer_payouts_page, claims_officer_retry_payout
 from apps.payments.views import payment_page
 from apps.chamas.views import chama_page, chama_detail_page, chama_create_page, chama_invite_page, chama_invite_accept_page
+from apps.users.views import sms_delivery_callback
 
 
 urlpatterns = [
@@ -68,6 +69,7 @@ urlpatterns = [
         path('payments/', include('apps.payments.urls')),
         path('claims/', include('apps.claims.urls')),
         path('admin/', include('apps.audit.urls')),
+        path('sms/delivery-callback/', sms_delivery_callback, name='sms-delivery-callback'),
     ])),
 ]
 
