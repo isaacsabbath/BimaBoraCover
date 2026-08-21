@@ -13,7 +13,7 @@ from django.views.decorators.http import require_POST
 from django.urls import reverse
 import uuid
 from django.core.cache import cache
-from apps.chamas.tasks import queue_chama_invite_email
+from apps.chamas.tasks import queue_chama_invite_email, queue_chama_invite_sms
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -143,6 +143,13 @@ class ChamaViewSet(viewsets.ModelViewSet):
             invite_link=invite_link,
             inviter_name=request.user.full_name,
         )
+        if invite_user.phone_number:
+            queue_chama_invite_sms(
+                phone_number=invite_user.phone_number,
+                chama_name=chama.group_name,
+                invite_link=invite_link,
+                inviter_name=request.user.full_name,
+            )
 
         return Response({
             'message': 'Invitation sent',
